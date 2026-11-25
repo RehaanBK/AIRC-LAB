@@ -820,7 +820,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h4 class="text-sm font-extrabold text-slate-900">Live Multi-Device Sync (Google Apps Script URL)</h4>
-              <p class="text-[11px] text-slate-500">Connect a free Google Sheet backend so requests submitted on student phones appear live on every TA &amp; Professor laptop.</p>
+              <p class="text-[11px] text-slate-500">Connect a free personal <strong>@gmail.com</strong> Google Sheet Web App (<strong>Who has access: Anyone</strong>) so requests appear live on every TA &amp; Professor laptop.</p>
             </div>
             <button onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold shrink-0">
               Copy Google Script Code
@@ -1133,15 +1133,6 @@
 
   <!-- =====================================================================
        APPLICATION JAVASCRIPT — MODULAR POST-LAUNCH EDITABLE ARCHITECTURE
-       SECTION 1: LAB_CONFIG & DEFAULT DATA
-       SECTION 2: PERSISTENT STATE & CLOUD SYNC ENGINE
-       SECTION 3: UI HELPERS, LOGO, HARDWARE ART, QR ENCODER & CSV PARSER
-       SECTION 4: ROLE SWITCHING, STUDENT QR LOCK MODE & STAFF PIN
-       SECTION 5: POST-LAUNCH SITE CUSTOMIZER, BACKUP & AI PROMPT GENERATOR
-       SECTION 6: STUDENT TOOL & 3D PRINT PORTALS
-       SECTION 7: LAB ASSISTANT DASHBOARD RENDERERS & ITEM EDITOR
-       SECTION 8: STUDENT UID CARD SCANNER CHECK-IN / CHECK-OUT
-       SECTION 9: 3D PRINT QUEUE, GOOGLE FORM BRIDGE & .TXT EXPORTS
   ====================================================================== -->
   <script>
     // =========================================================================
@@ -1377,7 +1368,14 @@
 
     const GOOGLE_APPS_SCRIPT_TEMPLATE = `function doGet(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AIRC_DB") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("AIRC_DB");
-  var raw = sheet.getRange("A1").getValue();
+  var lastRow = sheet.getLastRow();
+  var raw = "";
+  if (lastRow >= 1) {
+    var vals = sheet.getRange(1, 1, lastRow, 1).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      raw += String(vals[i][0] || "");
+    }
+  }
   var output = raw ? raw : JSON.stringify({ empty: true });
   return ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
 }
@@ -1385,13 +1383,20 @@
 function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AIRC_DB") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("AIRC_DB");
   if (e && e.postData && e.postData.contents) {
-    sheet.getRange("A1").setValue(e.postData.contents);
+    var text = e.postData.contents;
+    sheet.clearContents();
+    var chunkSize = 45000;
+    var row = 1;
+    for (var i = 0; i < text.length; i += chunkSize) {
+      sheet.getRange(row, 1).setValue(text.substring(i, i + chunkSize));
+      row++;
+    }
   }
   return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
 }`;
 
     // =========================================================================
-    // SECTION 2: APPLICATION STATE, LOCALSTORAGE & CLOUD SYNC
+    // SECTION 2: APPLICATION STATE, LOCALSTORAGE & PREFLIGHT-FREE CLOUD SYNC
     // =========================================================================
     const STORAGE_KEY = "AIRC_LAB_SYSTEM_V6";
     const PRINT3D_LOCK_KEY = "AIRC_PRINT3D_SUBMITTED_LOCK";
@@ -1464,6 +1469,18 @@ function doPost(e) {
       }
     }
 
+    function buildCloudSyncPayload() {
+      const clone = JSON.parse(JSON.stringify(appState));
+      if (Array.isArray(clone.printOrders)) {
+        clone.printOrders.forEach(o => {
+          if (o.zipDataUrl && o.zipDataUrl.length > 35000) {
+            delete o.zipDataUrl;
+          }
+        });
+      }
+      return JSON.stringify(clone);
+    }
+
     async function pushToCloud() {
       if (!appState.cloudSyncUrl) return;
       try {
@@ -1471,7 +1488,7 @@ function doPost(e) {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(appState)
+          body: buildCloudSyncPayload()
         });
         updateSyncStatusUi();
       } catch (err) {
@@ -1482,9 +1499,18 @@ function doPost(e) {
     async function pullFromCloud(silent = false) {
       if (!appState.cloudSyncUrl) return;
       try {
-        const res = await fetch(appState.cloudSyncUrl, { cache: "no-store" });
+        const sep = appState.cloudSyncUrl.includes("?") ? "&" : "?";
+        const requestUrl = `${appState.cloudSyncUrl}${sep}t=${Date.now()}`;
+        const res = await fetch(requestUrl, {
+          method: "GET",
+          redirect: "follow"
+        });
         if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
+        const rawText = await res.text();
+        if (rawText.trim().startsWith("<")) {
+          throw new Error("Received HTML instead of JSON — check that Web App 'Who has access' is set to 'Anyone'.");
+        }
+        const data = JSON.parse(rawText);
         if (data && !data.empty && Array.isArray(data.inventory) && data.inventory.length > 0) {
           const localUpdated = appState.lastUpdated || 0;
           const remoteUpdated = data.lastUpdated || 0;
@@ -1504,7 +1530,7 @@ function doPost(e) {
         if (!silent) showToast("Connected & synced with live Google Sheet!", "success");
       } catch (err) {
         console.warn("Cloud pull error:", err);
-        if (!silent) showToast("Could not reach Google Apps Script URL. Check deployment permissions.", "error");
+        if (!silent) showToast("Could not reach Google Apps Script URL. Verify 'Who has access' is set to 'Anyone'.", "error");
       }
     }
 
@@ -1547,7 +1573,7 @@ function doPost(e) {
       setTimeout(() => {
         el.style.opacity = "0";
         setTimeout(() => el.remove(), 300);
-      }, 3600);
+      }, 3800);
     }
 
     function applyDynamicConfigToUi() {
@@ -2586,14 +2612,14 @@ function doPost(e) {
       reader.onload = function (e) {
         const img = new Image();
         img.onload = function () {
-          const maxW = 480;
+          const maxW = 360;
           const scale = Math.min(1, maxW / img.width);
           const canvas = document.createElement("canvas");
           canvas.width = Math.round(img.width * scale);
           canvas.height = Math.round(img.height * scale);
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.72);
 
           const item = appState.inventory.find(i => i.id === itemId);
           if (item) {
