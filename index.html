@@ -815,12 +815,12 @@
           </div>
         </div>
 
-        <!-- Step 3: Free Live Google Sheet Cloud Sync -->
+        <!-- Step 3: Free Live Google Apps Script Cloud Sync -->
         <div class="rounded-2xl border border-indigo-200 p-4 space-y-3 bg-white">
           <div class="flex items-center justify-between">
             <div>
               <h4 class="text-sm font-extrabold text-slate-900">Live Multi-Device Sync (Google Apps Script URL)</h4>
-              <p class="text-[11px] text-slate-500">Connect a free personal <strong>@gmail.com</strong> Google Sheet Web App (<strong>Who has access: Anyone</strong>) so requests appear live on every TA &amp; Professor laptop.</p>
+              <p class="text-[11px] text-slate-500">Create a standalone project at <strong>script.google.com</strong> on a personal <strong>@gmail.com</strong> account (<strong>Who has access: Anyone</strong>) so requests sync live across all devices with zero Drive permission errors.</p>
             </div>
             <button onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold shrink-0">
               Copy Google Script Code
@@ -892,7 +892,7 @@
         <div class="rounded-2xl border border-emerald-200 p-4 space-y-3 bg-emerald-50/40">
           <h4 class="text-sm font-extrabold text-slate-900">3. Safe Post-Launch Updates &amp; AI Prompt Helper</h4>
           <p class="text-[11px] text-slate-600 leading-relaxed">
-            When you ask me to modify or add new features to this site after launch, your live inventory, UID checkouts, and 3D print orders remain safely stored in your browser &amp; connected Google Sheet. Always download a JSON backup before deploying new code:
+            When you ask me to modify or add new features to this site after launch, your live inventory, UID checkouts, and 3D print orders remain safely stored in your browser &amp; connected Cloud Sync. Always download a JSON backup before deploying new code:
           </p>
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="downloadFullDatabaseBackup()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition">
@@ -1366,30 +1366,33 @@
       }
     ];
 
+    // Zero-OAuth-Scope Standalone Cloud Sync Script (immune to Drive/Multi-Account conflicts)
     const GOOGLE_APPS_SCRIPT_TEMPLATE = `function doGet(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AIRC_DB") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("AIRC_DB");
-  var lastRow = sheet.getLastRow();
+  var props = PropertiesService.getScriptProperties();
+  var count = parseInt(props.getProperty("AIRC_CHUNKS") || "0", 10);
   var raw = "";
-  if (lastRow >= 1) {
-    var vals = sheet.getRange(1, 1, lastRow, 1).getValues();
-    for (var i = 0; i < vals.length; i++) {
-      raw += String(vals[i][0] || "");
-    }
+  for (var i = 0; i < count; i++) {
+    raw += (props.getProperty("AIRC_DB_" + i) || "");
   }
   var output = raw ? raw : JSON.stringify({ empty: true });
   return ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AIRC_DB") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("AIRC_DB");
   if (e && e.postData && e.postData.contents) {
     var text = e.postData.contents;
-    sheet.clearContents();
-    var chunkSize = 45000;
-    var row = 1;
-    for (var i = 0; i < text.length; i += chunkSize) {
-      sheet.getRange(row, 1).setValue(text.substring(i, i + chunkSize));
-      row++;
+    var props = PropertiesService.getScriptProperties();
+    var oldCount = parseInt(props.getProperty("AIRC_CHUNKS") || "0", 10);
+    var chunkSize = 8000;
+    var newCount = Math.ceil(text.length / chunkSize);
+    var batch = {};
+    for (var i = 0; i < newCount; i++) {
+      batch["AIRC_DB_" + i] = text.substring(i * chunkSize, (i + 1) * chunkSize);
+    }
+    batch["AIRC_CHUNKS"] = String(newCount);
+    props.setProperties(batch, false);
+    for (var j = newCount; j < oldCount; j++) {
+      props.deleteProperty("AIRC_DB_" + j);
     }
   }
   return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
@@ -1508,7 +1511,7 @@ function doPost(e) {
         if (!res.ok) throw new Error("HTTP " + res.status);
         const rawText = await res.text();
         if (rawText.trim().startsWith("<")) {
-          throw new Error("Received HTML instead of JSON — check that Web App 'Who has access' is set to 'Anyone'.");
+          throw new Error("Received HTML instead of JSON — check Web App deployment.");
         }
         const data = JSON.parse(rawText);
         if (data && !data.empty && Array.isArray(data.inventory) && data.inventory.length > 0) {
@@ -1527,10 +1530,10 @@ function doPost(e) {
           await pushToCloud();
         }
         updateSyncStatusUi();
-        if (!silent) showToast("Connected & synced with live Google Sheet!", "success");
+        if (!silent) showToast("Connected & synced with live cloud database!", "success");
       } catch (err) {
         console.warn("Cloud pull error:", err);
-        if (!silent) showToast("Could not reach Google Apps Script URL. Verify 'Who has access' is set to 'Anyone'.", "error");
+        if (!silent) showToast("Could not reach Apps Script URL. Verify 'Who has access' is 'Anyone' and redeploy.", "error");
       }
     }
 
