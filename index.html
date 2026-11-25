@@ -1,0 +1,3413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIRC Lab Control Center — Inventory, UID Check-In/Out &amp; 3D Print Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-slate-100 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- =====================================================================
+       SECTION A: TOP NAVIGATION & ROLE SWITCHER BAR
+  ====================================================================== -->
+  <header class="bg-slate-950 text-white border-b border-slate-800 sticky top-0 z-40 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
+        <!-- Brand & Lab Title -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3.5">
+            <div id="brand-logo-slot" class="bg-white px-2.5 py-1 rounded-xl shadow-md border border-slate-200 flex items-center justify-center shrink-0" title="A.I. &amp; Robotics Center — RIT Dubai"></div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 id="ui-lab-title" class="text-base sm:text-lg font-extrabold tracking-tight text-white">AIRC Lab Control Center</h1>
+                <span id="sync-status-pill" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  LOCAL MODE
+                </span>
+              </div>
+              <p id="ui-lab-subtitle" class="text-xs text-slate-400">RIT Dubai • Standardized Inventory • UID Card Check-In/Out • 3D Print Queue</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Staff Navigation Controls (Hidden when Student QR Lock Mode is active) -->
+        <div id="staff-header-controls" class="flex flex-wrap items-center gap-2">
+          <!-- View Switcher Pill -->
+          <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex items-center">
+            <button id="btn-mode-assistant" onclick="switchViewMode('assistant')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow">
+              <span>Lab Assistant Dashboard</span>
+            </button>
+            <button id="btn-mode-student" onclick="switchViewMode('student')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white">
+              <span>Student QR Forms</span>
+            </button>
+          </div>
+
+          <button onclick="openSiteEditorModal()" class="px-3 py-2 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+            <span>Customize Site &amp; Backup</span>
+          </button>
+
+          <button onclick="openTeamSyncModal()" class="px-3 py-2 rounded-xl bg-indigo-900/80 hover:bg-indigo-800 text-indigo-100 border border-indigo-600/50 text-xs font-semibold transition flex items-center gap-1.5">
+            <span>Share &amp; Team Access</span>
+          </button>
+
+          <button onclick="openQrModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+            <span id="qr-btn-icon"></span>
+            <span>Lab QR Codes</span>
+          </button>
+
+          <button onclick="openAddItemModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+            <span>+ Add Inventory</span>
+          </button>
+        </div>
+
+        <!-- Student Mode Right-Side Staff Unlock Button -->
+        <div id="student-mode-header-actions" class="hidden flex items-center gap-2">
+          <span id="student-portal-badge" class="text-xs text-indigo-300 font-medium">Student Equipment Portal</span>
+          <button onclick="promptStaffUnlock()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition">
+            TA / Professor Login
+          </button>
+        </div>
+      </div>
+
+      <!-- Live KPI Telemetry Strip (Staff Only) -->
+      <div id="staff-kpi-strip" class="py-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 text-slate-300 border border-slate-800">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            Total Units: <strong id="kpi-total-units" class="font-mono text-white">0</strong>
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Available: <strong id="kpi-available-units" class="font-mono text-emerald-200">0</strong>
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/60">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            Taken: <strong id="kpi-taken-units" class="font-mono text-amber-200">0</strong>
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-950/80 text-rose-300 border border-rose-800/60">
+            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+            Pending Requests: <strong id="kpi-pending-requests" class="font-mono text-rose-200">0</strong>
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-800/60">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+            3D Print Queue: <strong id="kpi-print-queue" class="font-mono text-indigo-200">0</strong>
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openAuditModal()" class="px-2.5 py-1 rounded-full bg-indigo-950/80 hover:bg-indigo-900 text-indigo-200 border border-indigo-800/70 font-medium transition">
+            UID Scan Audit Log
+          </button>
+          <button onclick="openProfessorModal()" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-medium transition">
+            Professor Alignment Notes
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       TOAST NOTIFICATION BANNER
+  ====================================================================== -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- =====================================================================
+       SECTION B: MAIN APPLICATION WORKSPACE
+  ====================================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ===================================================================
+         VIEW 1: LAB ASSISTANT / TA / PROFESSOR CONTROL CENTER
+    ==================================================================== -->
+    <section id="view-assistant" class="space-y-6">
+
+      <!-- Multi-User & Professor Governance Callout -->
+      <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center font-bold shrink-0 mt-0.5">!</div>
+          <div>
+            <h2 class="text-sm font-bold text-amber-950">Post-Launch Ready: Modular Site Architecture &amp; Professor Alignment</h2>
+            <p class="text-xs text-amber-900 mt-0.5 leading-relaxed">
+              You can edit printers, materials, labels, and inventory items live anytime via <strong>Customize Site &amp; Backup</strong>—or send a follow-up prompt after launch to add new features while keeping your live database intact.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="openSiteEditorModal()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-sm">
+            Edit Site Settings
+          </button>
+          <button onclick="openProfessorModal()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-sm">
+            Meeting Checklist
+          </button>
+        </div>
+      </div>
+
+      <!-- 5 Primary Dashboard Feature Buttons -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <button id="tab-btn-requests" onclick="switchAssistantTab('requests')" class="tab-card text-left p-4 rounded-2xl border-2 border-indigo-600 bg-white shadow-sm transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Feature 1</span>
+            <span id="badge-tab-requests" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-rose-100 text-rose-700">0</span>
+          </div>
+          <div class="mt-2 text-sm sm:text-base font-extrabold text-slate-900">Incoming Requests</div>
+          <div class="text-xs text-slate-500 mt-0.5">Approve &amp; scan student UID</div>
+        </button>
+
+        <button id="tab-btn-taken" onclick="switchAssistantTab('taken')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Feature 2</span>
+            <span id="badge-tab-taken" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">0</span>
+          </div>
+          <div class="mt-2 text-sm sm:text-base font-extrabold text-slate-900">Taken Tools</div>
+          <div class="text-xs text-slate-500 mt-0.5">Active loans, Name + UID &amp; return</div>
+        </button>
+
+        <button id="tab-btn-available" onclick="switchAssistantTab('available')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Feature 3</span>
+            <span id="badge-tab-available" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">0</span>
+          </div>
+          <div class="mt-2 text-sm sm:text-base font-extrabold text-slate-900">Available Tools</div>
+          <div class="text-xs text-slate-500 mt-0.5">In-stock shelf items &amp; desk checkout</div>
+        </button>
+
+        <button id="tab-btn-checker" onclick="switchAssistantTab('checker')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-sky-600">Feature 4</span>
+            <span id="badge-tab-checker" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-sky-100 text-sky-800">72</span>
+          </div>
+          <div class="mt-2 text-sm sm:text-base font-extrabold text-slate-900">Equipment Checker</div>
+          <div class="text-xs text-slate-500 mt-0.5">All tools + stored pictures &amp; edit</div>
+        </button>
+
+        <button id="tab-btn-prints" onclick="switchAssistantTab('prints')" class="tab-card col-span-2 sm:col-span-1 text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-600">Feature 5</span>
+            <span id="badge-tab-prints" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-purple-100 text-purple-800">0</span>
+          </div>
+          <div class="mt-2 text-sm sm:text-base font-extrabold text-slate-900">3D Print Orders</div>
+          <div class="text-xs text-slate-500 mt-0.5">Creality/Neptune, .ZIP &amp; .TXT</div>
+        </button>
+      </div>
+
+      <!-- =================================================================
+           PANEL 1: INCOMING REQUESTS
+      ================================================================== -->
+      <div id="panel-requests" class="space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-900">1. Incoming Student Tool Requests</h2>
+              <p class="text-xs text-slate-500">
+                Verify availability, then click <strong>Approve &amp; Scan UID</strong>. Once the student taps their University ID card, the tool moves to <strong>Taken Tools</strong> and deducts from <strong>Available Tools</strong>.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button onclick="manualCloudRefresh()" id="btn-manual-sync" class="hidden px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition">
+                Refresh Live Sync
+              </button>
+              <button onclick="switchViewMode('student', false, 'tools')" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 transition">
+                + Preview Student QR Form
+              </button>
+            </div>
+          </div>
+          <div id="requests-list-container" class="mt-4 space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- =================================================================
+           PANEL 2: TAKEN TOOLS
+      ================================================================== -->
+      <div id="panel-taken" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-900">2. Currently Taken Tools (Active Checkouts)</h2>
+              <p class="text-xs text-slate-500">
+                Every borrowed tool displays the borrower's <strong>Full Name and University ID (UID)</strong>. Returning a tool requires scanning the student's UID card to close the loan.
+              </p>
+            </div>
+            <input type="text" id="taken-search-input" oninput="renderTakenTools()" placeholder="Filter by tool, student name, or UID..." class="px-3 py-2 rounded-xl border border-slate-200 text-xs w-full sm:w-64 focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div id="taken-list-container" class="mt-4 space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- =================================================================
+           PANEL 3: AVAILABLE TOOLS
+      ================================================================== -->
+      <div id="panel-available" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-900">3. Available Tools in Lab</h2>
+              <p class="text-xs text-slate-500">
+                Live stock ready for checkout. Use <strong>Desk Checkout (Scan UID)</strong> for walk-in students at the lab counter.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <input type="text" id="available-search-input" oninput="renderAvailableTools()" placeholder="Search available tools or shelf..." class="px-3 py-2 rounded-xl border border-slate-200 text-xs w-full sm:w-56 focus:outline-none focus:border-indigo-500" />
+              <select id="available-cat-filter" onchange="renderAvailableTools()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-medium">
+                <option value="ALL">All Categories</option>
+              </select>
+            </div>
+          </div>
+          <div id="available-list-container" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+      </div>
+
+      <!-- =================================================================
+           PANEL 4: EQUIPMENT CHECKER (ALL TOOLS + STORED PICTURES + INLINE EDIT)
+      ================================================================== -->
+      <div id="panel-checker" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-900">4. Master Equipment Checker &amp; Visual Catalog</h2>
+              <p class="text-xs text-slate-500">
+                Complete database of all lab equipment with stored reference pictures, shelf locations, live borrower UID tags, custom photo upload, and post-launch item editing.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="exportInventoryCsv()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-300 transition">
+                Export Spreadsheet (.CSV)
+              </button>
+              <label class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 cursor-pointer transition">
+                Import CSV
+                <input type="file" accept=".csv" onchange="importInventoryCsv(event)" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Search & Category Filter Bar -->
+          <div class="mt-4 flex flex-col sm:flex-row gap-2">
+            <input type="text" id="checker-search-input" oninput="renderEquipmentChecker()" placeholder="Search all items by name, ID (e.g. AIRC-005), location, or notes..." class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500" />
+            <select id="checker-cat-filter" onchange="renderEquipmentChecker()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-medium">
+              <option value="ALL">All Categories</option>
+            </select>
+            <select id="checker-status-filter" onchange="renderEquipmentChecker()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-medium">
+              <option value="ALL">All Statuses</option>
+              <option value="AVAILABLE">In Stock</option>
+              <option value="TAKEN">Checked Out / Taken</option>
+              <option value="PROFESSOR">Ask Professor / Restricted</option>
+            </select>
+          </div>
+
+          <div id="checker-grid-container" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+      </div>
+
+      <!-- =================================================================
+           PANEL 5: 3D PRINT ORDERS & GOOGLE FORM BRIDGE
+      ================================================================== -->
+      <div id="panel-prints" class="hidden space-y-5">
+        <!-- Google Form Integration Banner -->
+        <div class="bg-indigo-950 text-white rounded-2xl p-5 border border-indigo-800 shadow-md">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                3D PRINTERS &amp; GOOGLE FORM BRIDGE
+              </div>
+              <h2 class="text-lg sm:text-xl font-extrabold mt-1.5">5. 3D Print Orders &amp; Connected Form</h2>
+              <p class="text-xs text-indigo-200 mt-1 max-w-2xl leading-relaxed">
+                Supports <strong id="ui-printer-list-summary">Creality K2 &amp; Elegoo Neptune 4 Max</strong>, single <strong>.ZIP</strong> archive submissions, Other Requests notes, Google Form sync, and plain-text <strong>.TXT</strong> job slip exports.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button onclick="openQrModal()" class="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold border border-purple-400/40 shadow-sm transition">
+                3D Print Form QR Code
+              </button>
+              <button onclick="toggleGoogleFormDrawer()" class="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold border border-indigo-400/40 shadow-sm transition">
+                Open Connected Google Form
+              </button>
+              <button onclick="downloadAllPrintOrdersTxt()" class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition">
+                Print All Orders (.TXT)
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Google Form & CSV Importer Drawer -->
+          <div id="google-form-drawer" class="hidden mt-5 pt-5 border-t border-indigo-800/80 grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-slate-900/90 rounded-xl p-4 border border-indigo-500/30 space-y-3">
+              <h3 class="text-sm font-bold text-white">Google Form URL &amp; Sheet Sync</h3>
+              <div>
+                <label class="block text-[11px] font-medium text-indigo-200 mb-1">Google Form Link (Embed / QR Target)</label>
+                <div class="flex gap-1.5">
+                  <input type="url" id="gform-url-input" placeholder="https://docs.google.com/forms/d/e/.../viewform" class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-400" />
+                  <button onclick="saveGoogleFormUrl()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white">Save</button>
+                </div>
+              </div>
+              <div class="pt-2 border-t border-slate-800 space-y-2">
+                <label class="block text-[11px] font-medium text-indigo-200">Paste Google Form Response Rows (CSV)</label>
+                <textarea id="bulk-print-csv-input" rows="2" placeholder="Name, UID, File.zip, Material, Infill, Time, Printer, OtherRequests" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-mono text-white focus:outline-none focus:border-indigo-400"></textarea>
+                <div class="flex flex-wrap gap-2">
+                  <button onclick="importBulkPrintCsv()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[11px] font-bold text-white">Import Rows</button>
+                  <button onclick="simulateGoogleFormSync()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-bold text-white">Simulate Form Webhook</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-white rounded-xl overflow-hidden border border-indigo-400/40 min-h-[300px] flex flex-col text-slate-800">
+              <div class="bg-slate-100 px-3 py-2 border-b border-slate-200 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700" id="gform-iframe-label">Embedded 3D Print Google Form</span>
+                <a id="gform-external-link" href="https://docs.google.com/forms" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-indigo-600 hover:underline">Open in New Tab</a>
+              </div>
+              <div id="gform-embed-container" class="flex-1 flex items-center justify-center p-6 text-center bg-slate-50"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Print Entry Form + Recorded Orders List -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <!-- Log New 3D Print Order -->
+          <form id="assistant-print-form" onsubmit="submitNewPrintOrder(event)" class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3 h-fit">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-extrabold text-slate-900">Record 3D Print Request</h3>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800">1 .ZIP ONLY</span>
+            </div>
+            <p class="text-xs text-slate-500">Every form entry is permanently archived in the lab database.</p>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Student Full Name *</label>
+              <input type="text" id="print-student-name" required placeholder="e.g. Sabrina Al Bukhari" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">University UID *</label>
+                <input type="text" id="print-student-uid" required placeholder="UID-7049211" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Material</label>
+                <select id="print-material" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50"></select>
+              </div>
+            </div>
+
+            <!-- Which Printer Selection -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Which Printer? *</label>
+              <select id="print-printer-select" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50 text-slate-900 focus:outline-none focus:border-indigo-500"></select>
+            </div>
+
+            <!-- 3D Printing File Submission (.ZIP Only — 1 Submission Only) -->
+            <div class="rounded-xl border border-dashed border-indigo-300 bg-indigo-50/40 p-3 space-y-1.5">
+              <label class="block text-xs font-bold text-indigo-950">3D Printing File Submission (.ZIP File Only — 1 File Max) *</label>
+              <input
+                type="file"
+                id="print-zip-file"
+                accept=".zip,application/zip,application/x-zip-compressed"
+                onchange="handleZipSelection(event, 'assistant')"
+                required
+                class="block w-full text-[11px] text-slate-600 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer"
+              />
+              <div id="assistant-zip-status" class="text-[11px] text-slate-500">Attach a single .zip archive containing your STL/3MF files.</div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Google Drive Backup Link (Optional)</label>
+              <input type="url" id="print-file-link" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Infill %</label>
+                <input type="text" id="print-infill" value="25%" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Est. Print Time</label>
+                <input type="text" id="print-est-time" value="2h 30m" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+              </div>
+            </div>
+
+            <!-- Other Requests (Textbox Only) -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Other Requests</label>
+              <textarea id="print-other-requests" rows="3" placeholder="Enter any other requests here..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500"></textarea>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
+              Save 3D Print Order to Database
+            </button>
+          </form>
+
+          <!-- Recorded Orders List -->
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div>
+                <h3 class="text-base font-extrabold text-slate-900">Recorded 3D Print Queue &amp; Archive</h3>
+                <p class="text-xs text-slate-500">Click <strong>Print Details (.TXT)</strong> on any job to download a formatted text ticket.</p>
+              </div>
+              <select id="print-status-filter" onchange="renderPrintOrders()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 font-semibold">
+                <option value="ALL">All Statuses</option>
+                <option value="Queued">Queued</option>
+                <option value="Printing">Printing</option>
+                <option value="Completed">Completed</option>
+                <option value="Picked Up">Picked Up</option>
+              </select>
+            </div>
+            <div id="print-orders-list" class="mt-4 space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===================================================================
+         VIEW 2: STUDENT SIDE — QR TOOL REQUEST & 3D PRINT REQUEST PORTAL
+    ==================================================================== -->
+    <section id="view-student" class="hidden max-w-3xl mx-auto space-y-5">
+      <!-- Student Portal Form Switcher -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-1.5 flex items-center gap-1.5 shadow-sm">
+        <button type="button" id="student-tab-tools" onclick="switchStudentSubView('tools')" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition bg-indigo-600 text-white shadow-sm">
+          1. Lab Tool Request Form
+        </button>
+        <button type="button" id="student-tab-print3d" onclick="switchStudentSubView('print3d')" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-600 hover:bg-slate-100">
+          2. 3D Printer Request Form (.ZIP)
+        </button>
+      </div>
+
+      <!-- SUB-VIEW A: STUDENT TOOL REQUEST FORM -->
+      <div id="student-subview-tools" class="space-y-5">
+        <!-- Mandatory University ID Card Banner -->
+        <div class="bg-indigo-950 text-white rounded-2xl p-4 sm:p-5 border border-indigo-800 shadow-md flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/25 border border-indigo-400/30 flex items-center justify-center text-indigo-300 font-bold shrink-0 mt-0.5" id="student-id-icon"></div>
+          <div>
+            <h2 class="text-sm sm:text-base font-extrabold text-white">University ID Card Required Before Pickup</h2>
+            <p class="text-xs sm:text-sm text-indigo-200 mt-1 leading-relaxed">
+              Search and select your required tool below to view its live availability and lab location. Before taking any tool from the professor or lab assistant, you <strong>must scan your University ID card</strong> on the lab reader at the desk for check-in / check-out.
+            </p>
+          </div>
+        </div>
+
+        <!-- Typed Searchable Tool Dropdown Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600">Step 1 — Live Equipment Lookup</span>
+            <h3 class="text-lg font-extrabold text-slate-900 mt-0.5">Type &amp; Select a Tool from Lab Inventory</h3>
+            <p class="text-xs text-slate-500">Type a component name (e.g. "RPlidar", "Arduino", "Hexapod", "RealSense", "Screwdriver") and select it from the list.</p>
+          </div>
+
+          <div class="relative">
+            <input
+              type="text"
+              id="student-tool-search"
+              onfocus="openStudentDropdown()"
+              oninput="filterStudentDropdown()"
+              autocomplete="off"
+              placeholder="Start typing tool name to search lab inventory..."
+              class="w-full px-4 py-3.5 rounded-xl border-2 border-indigo-300 focus:border-indigo-600 focus:outline-none text-sm font-semibold text-slate-900 bg-slate-50/60"
+            />
+            <button type="button" onclick="clearStudentSelection()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-700 px-2 py-1">
+              Clear
+            </button>
+
+            <!-- Searchable Dropdown List -->
+            <div id="student-dropdown-list" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-72 overflow-y-auto z-30 divide-y divide-slate-100"></div>
+          </div>
+
+          <!-- 3-State Result Display Card -->
+          <div id="student-tool-status-card" class="hidden"></div>
+
+          <!-- Borrow Request Form -->
+          <form id="student-borrow-form" onsubmit="submitStudentBorrowRequest(event)" class="hidden pt-4 border-t border-slate-100 space-y-4">
+            <h4 id="student-form-heading" class="text-base font-extrabold text-slate-900">Step 2 — Submit Tool Request</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Your Full Name *</label>
+                <input type="text" id="req-student-name" required placeholder="e.g. Sabrina Al Bukhari" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">University Email *</label>
+                <input type="email" id="req-student-email" required placeholder="e.g. sabrina@g.rit.edu" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Quantity Needed *</label>
+                <input type="number" id="req-qty" min="1" max="1" value="1" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Expected Return Date *</label>
+                <input type="date" id="req-return-date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Project / Course Purpose *</label>
+              <input type="text" id="req-purpose" required placeholder="e.g. Senior Design II — Autonomous Navigation Testing" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500" />
+            </div>
+
+            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-md transition">
+              Submit Request &amp; Proceed to Desk UID Card Scan
+            </button>
+          </form>
+
+          <!-- Post-Submission Receipt -->
+          <div id="student-receipt-box" class="hidden rounded-2xl bg-emerald-50 border-2 border-emerald-500 p-5 space-y-2">
+            <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Request Logged in Lab Control Center</div>
+            <h4 id="receipt-title" class="text-base font-extrabold text-slate-900"></h4>
+            <p id="receipt-desc" class="text-xs text-slate-700 leading-relaxed"></p>
+            <div class="pt-2">
+              <button type="button" onclick="resetStudentFlow()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+                Check Another Tool
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-VIEW B: STUDENT 3D PRINTER REQUEST FORM (SEPARATE QR TARGET) -->
+      <div id="student-subview-print3d" class="hidden space-y-5">
+        <div class="bg-purple-950 text-white rounded-2xl p-4 sm:p-5 border border-purple-800 shadow-md">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-500/30 text-purple-200 border border-purple-400/30">
+              AIRC 3D PRINTING SUBMISSION PORTAL
+            </span>
+            <span class="text-[11px] font-bold text-amber-300">Limit: 1 Submission Only • .ZIP Archive Required</span>
+          </div>
+          <h2 class="text-base sm:text-lg font-extrabold mt-2">Submit 3D Printing Job (.ZIP File)</h2>
+          <p class="text-xs text-purple-200 mt-1 leading-relaxed">
+            Select your target printer (<strong id="ui-stu-printer-names">Creality K2 or Elegoo Neptune 4 Max</strong>), upload your 3D model files packaged in a single <strong>.ZIP</strong> file, and include any special instructions under <strong>Other Requests</strong>. Only <strong>one submission</strong> is permitted per student.
+          </p>
+        </div>
+
+        <!-- Student 3D Print Form Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+          <form id="student-print3d-form" onsubmit="submitStudentPrint3dOrder(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Student Full Name *</label>
+                <input type="text" id="stu-print-name" required placeholder="e.g. Sabrina Al Bukhari" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-purple-600" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">University UID *</label>
+                <input type="text" id="stu-print-uid" required placeholder="e.g. UID-7049211" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-purple-600" />
+              </div>
+            </div>
+
+            <!-- Which Printer: Dynamically Rendered from Editable Printer List -->
+            <div>
+              <label class="block text-xs font-extrabold text-slate-800 mb-1.5">Which Printer? *</label>
+              <div id="stu-printer-radio-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            </div>
+
+            <!-- Submission of 3D Printing File in a .ZIP File (One Submission Only) -->
+            <div class="rounded-2xl border-2 border-dashed border-purple-300 bg-purple-50/40 p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-extrabold text-purple-950">3D Printing File Submission (.ZIP File Only) *</label>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-700 text-white">1 SUBMISSION ONLY</span>
+              </div>
+              <input
+                type="file"
+                id="stu-print-zip-file"
+                accept=".zip,application/zip,application/x-zip-compressed"
+                onchange="handleZipSelection(event, 'student')"
+                required
+                class="block w-full text-xs text-slate-700 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer"
+              />
+              <p id="student-zip-status" class="text-[11px] text-slate-600">
+                Compress your STL/3MF files into a single <strong>.zip</strong> archive before uploading. Only one file and one submission are allowed.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Material</label>
+                <select id="stu-print-material" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50"></select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Infill %</label>
+                <input type="text" id="stu-print-infill" value="25%" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Est. Print Time</label>
+                <input type="text" id="stu-print-time" value="2h 30m" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs" />
+              </div>
+            </div>
+
+            <!-- Other Requests (Textbox Only) -->
+            <div>
+              <label class="block text-xs font-extrabold text-slate-800 mb-1">Other Requests</label>
+              <textarea id="stu-print-other-requests" rows="3" placeholder="Write any other requests here..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-purple-600"></textarea>
+            </div>
+
+            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold shadow-md transition">
+              Submit 3D Print .ZIP File (Final Submission)
+            </button>
+          </form>
+
+          <!-- One-Submission-Only Lockout Confirmation Box -->
+          <div id="student-print3d-locked-box" class="hidden rounded-2xl bg-emerald-50 border-2 border-emerald-500 p-5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Submission Recorded &amp; Locked (1 Submission Limit Reached)</span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white">SUBMITTED</span>
+            </div>
+            <h4 id="stu-print-receipt-title" class="text-base font-extrabold text-slate-900"></h4>
+            <p id="stu-print-receipt-desc" class="text-xs text-slate-700 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =====================================================================
+       MODAL 1: STUDENT UID CARD SCANNER (CHECK-IN / CHECK-OUT VERIFICATION)
+  ====================================================================== -->
+  <div id="modal-uid" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="bg-indigo-950 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">University ID Reader</span>
+          <h3 id="uid-modal-title" class="text-base font-extrabold">Scan Student UID Card</h3>
+        </div>
+        <button onclick="closeUidModal()" class="text-slate-300 hover:text-white text-sm font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div id="uid-modal-summary" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 space-y-1"></div>
+
+        <!-- Optional Student Name Input for Walk-in Desk Checkouts -->
+        <div id="uid-walkin-fields" class="hidden space-y-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Student Name (Auto-fills if UID is in directory)</label>
+            <input type="text" id="quick-student-name" placeholder="Enter student name..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Return Date</label>
+              <input type="date" id="quick-return-date" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Purpose</label>
+              <input type="text" id="quick-purpose" value="Lab Bench Work" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+            </div>
+          </div>
+        </div>
+
+        <form onsubmit="confirmUidScanAction(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Tap University ID Card on USB Reader or Enter UID:</label>
+            <input
+              type="text"
+              id="uid-scanner-input"
+              oninput="handleUidLookupPreview()"
+              required
+              autocomplete="off"
+              placeholder="e.g. UID-7049211"
+              class="w-full text-center font-mono text-base font-extrabold tracking-wider px-4 py-3 rounded-xl border-2 border-indigo-400 focus:border-indigo-600 focus:outline-none bg-indigo-50/40 text-indigo-950"
+            />
+          </div>
+
+          <div id="uid-directory-match-box" class="text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-600 text-center">
+            Waiting for University ID card tap...
+          </div>
+
+          <!-- One-tap Simulation Buttons for Testing Without Hardware Reader -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-semibold text-slate-400 text-center">Simulate Student Card Tap:</div>
+            <div class="flex flex-wrap items-center justify-center gap-1.5">
+              <button type="button" onclick="fillSimulatedUid('UID-7049211')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 font-mono text-[11px] font-semibold border border-slate-200">
+                Sabrina (UID-7049211)
+              </button>
+              <button type="button" onclick="fillSimulatedUid('UID-4920184')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 font-mono text-[11px] font-semibold border border-slate-200">
+                Rohan (UID-4920184)
+              </button>
+              <button type="button" onclick="fillSimulatedUid('UID-8831042')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 font-mono text-[11px] font-semibold border border-slate-200">
+                Gaurav (UID-8831042)
+              </button>
+              <button type="button" id="sim-match-borrower-btn" onclick="" class="hidden px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-mono text-[11px] font-bold border border-amber-300">
+                Borrower Card
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button type="button" onclick="closeUidModal()" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
+              Cancel
+            </button>
+            <button type="submit" id="uid-confirm-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">
+              Verify UID &amp; Confirm
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 2: SHARE LINKS, MULTIPLE TA/PROFESSOR ACCESS & CLOUD SYNC
+  ====================================================================== -->
+  <div id="modal-team-sync" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="bg-indigo-950 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">Multi-User Deployment &amp; Access</span>
+          <h3 class="text-base font-extrabold">Share Student Links &amp; Invite TAs / Professors</h3>
+        </div>
+        <button onclick="closeTeamSyncModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-5 text-xs text-slate-700">
+        <!-- Step 1: Role Share Links -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-2 flex flex-col justify-between">
+            <div class="space-y-1.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white">1. TOOL REQUEST QR</span>
+              <h4 class="text-sm font-extrabold text-slate-900">Student Tool Link</h4>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Opens the locked <strong>Student Tool Request Form</strong> with TA dashboard locked behind PIN.
+              </p>
+            </div>
+            <button onclick="copyShareLink('student')" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition">
+              Copy Tool QR Link
+            </button>
+          </div>
+
+          <div class="rounded-2xl border border-purple-200 bg-purple-50/50 p-4 space-y-2 flex flex-col justify-between">
+            <div class="space-y-1.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-600 text-white">2. 3D PRINTER QR</span>
+              <h4 class="text-sm font-extrabold text-slate-900">3D Print Form Link</h4>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Opens directly to the <strong>3D Printer Request Form</strong> (Creality K2 / Neptune 4 Max + .ZIP upload).
+              </p>
+            </div>
+            <button onclick="copyShareLink('print3d')" class="w-full py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition">
+              Copy 3D Print QR Link
+            </button>
+          </div>
+
+          <div class="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 space-y-2 flex flex-col justify-between">
+            <div class="space-y-1.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-600 text-white">3. STAFF INVITE</span>
+              <h4 class="text-sm font-extrabold text-slate-900">TAs &amp; Professors</h4>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Opens the full <strong>Lab Control Center</strong> connected to your live shared database.
+              </p>
+            </div>
+            <button onclick="copyShareLink('staff')" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition">
+              Copy Staff Invite Link
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Staff PIN Setting -->
+        <div class="rounded-2xl border border-slate-200 p-4 space-y-2 bg-slate-50">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 class="text-sm font-extrabold text-slate-900">Staff PIN (Protects TA &amp; Professor Dashboard)</h4>
+              <p class="text-[11px] text-slate-500">Students scanning the QR code cannot open the Assistant Dashboard without this PIN.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="staff-pin-input" maxlength="10" class="w-28 text-center font-mono font-bold px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-900" />
+              <button onclick="saveStaffPin()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold">Update PIN</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Free Live Google Sheet Cloud Sync -->
+        <div class="rounded-2xl border border-indigo-200 p-4 space-y-3 bg-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-sm font-extrabold text-slate-900">Live Multi-Device Sync (Google Apps Script URL)</h4>
+              <p class="text-[11px] text-slate-500">Connect a free Google Sheet backend so requests submitted on student phones appear live on every TA &amp; Professor laptop.</p>
+            </div>
+            <button onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold shrink-0">
+              Copy Google Script Code
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="url" id="cloud-sync-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-[11px]" />
+            <button onclick="saveCloudSyncUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0">
+              Connect &amp; Sync
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 3: POST-LAUNCH SITE & DASHBOARD CUSTOMIZER + BACKUP / AI PROMPT
+  ====================================================================== -->
+  <div id="modal-site-editor" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="bg-slate-950 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">Post-Launch Control &amp; Extensibility</span>
+          <h3 class="text-base font-extrabold">Customize Site &amp; Dashboard Settings</h3>
+        </div>
+        <button onclick="closeSiteEditorModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-5 text-xs text-slate-700">
+        <!-- 1. Branding & Header Text -->
+        <div class="rounded-2xl border border-slate-200 p-4 space-y-3 bg-slate-50/70">
+          <h4 class="text-sm font-extrabold text-slate-900">1. Lab Header &amp; Branding Labels</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Control Center Title</label>
+              <input type="text" id="cfg-lab-title" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Subtitle / Campus Tagline</label>
+              <input type="text" id="cfg-lab-subtitle" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 3D Printers & Filament Materials -->
+        <div class="rounded-2xl border border-purple-200 p-4 space-y-3 bg-purple-50/30">
+          <h4 class="text-sm font-extrabold text-slate-900">2. Available 3D Printers &amp; Filament Materials</h4>
+          <p class="text-[11px] text-slate-600">Add or remove printers/materials here—both the Assistant Dashboard and Student 3D Print QR Form update immediately.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">3D Printers (One per line)</label>
+              <textarea id="cfg-printers-list" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs"></textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Filament Materials (One per line)</label>
+              <textarea id="cfg-materials-list" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs"></textarea>
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" onclick="saveSiteCustomization()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm transition">
+              Apply Live Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Safe Post-Launch Backup & AI Modification Prompt Generator -->
+        <div class="rounded-2xl border border-emerald-200 p-4 space-y-3 bg-emerald-50/40">
+          <h4 class="text-sm font-extrabold text-slate-900">3. Safe Post-Launch Updates &amp; AI Prompt Helper</h4>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            When you ask me to modify or add new features to this site after launch, your live inventory, UID checkouts, and 3D print orders remain safely stored in your browser &amp; connected Google Sheet. Always download a JSON backup before deploying new code:
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="downloadFullDatabaseBackup()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition">
+              Download Full Backup (.JSON)
+            </button>
+            <label class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold cursor-pointer transition">
+              Restore Backup (.JSON)
+              <input type="file" accept=".json" onchange="restoreFullDatabaseBackup(event)" class="hidden" />
+            </label>
+            <button type="button" onclick="copyAiEditContextPrompt()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-sm transition">
+              Copy AI Modification Prompt
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 4: EDIT EXISTING INVENTORY ITEM (POST-LAUNCH ITEM EDITOR)
+  ====================================================================== -->
+  <div id="modal-edit-item" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span id="edit-item-id-badge" class="text-[10px] font-mono font-bold text-indigo-300"></span>
+          <h3 class="text-base font-extrabold">Edit Equipment Details</h3>
+        </div>
+        <button onclick="closeEditItemModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+      <form onsubmit="saveEditedItem(event)" class="p-5 space-y-3">
+        <input type="hidden" id="edit-item-id" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Item Name *</label>
+          <input type="text" id="edit-item-name" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold" />
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+            <input type="text" id="edit-item-category" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Total Qty</label>
+            <input type="number" id="edit-item-total" min="0" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Usable Avail.</label>
+            <input type="number" id="edit-item-avail" min="0" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Storage Location *</label>
+          <input type="text" id="edit-item-location" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Condition / Notes</label>
+          <input type="text" id="edit-item-notes" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-700 pt-1">
+          <input type="checkbox" id="edit-item-prof" class="rounded text-indigo-600" />
+          <span>Requires Professor Permission ("Not there, ask the professor")</span>
+        </label>
+        <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="deleteEditedItem()" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">
+            Delete Item
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeEditItemModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600">Cancel</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Save Changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 5: STAFF PIN UNLOCK PROMPT (WHEN SWITCHING OUT OF STUDENT MODE)
+  ====================================================================== -->
+  <div id="modal-staff-pin" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="bg-slate-950 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Authorized Personnel Only</span>
+          <h3 class="text-base font-extrabold">Enter TA / Professor PIN</h3>
+        </div>
+        <button onclick="closeStaffPinModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+      <form onsubmit="verifyStaffPinSubmit(event)" class="p-5 space-y-4">
+        <p class="text-xs text-slate-600">Enter the lab staff PIN to open the Teaching Assistant &amp; Professor Control Center (Default PIN: <strong class="font-mono">2026</strong>).</p>
+        <input type="password" id="unlock-pin-input" required placeholder="Enter PIN..." class="w-full text-center font-mono text-lg font-extrabold tracking-widest px-4 py-3 rounded-xl border-2 border-indigo-300 focus:border-indigo-600 focus:outline-none" />
+        <div class="flex gap-2">
+          <button type="button" onclick="closeStaffPinModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600">Cancel</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Unlock Dashboard</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 6: LAB QR CODES POSTER GENERATOR
+  ====================================================================== -->
+  <div id="modal-qr" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div id="qr-modal-logo-slot" class="bg-white px-2 py-1 rounded-xl shrink-0"></div>
+          <div>
+            <h3 class="text-base font-extrabold">AIRC Lab Printable QR Code Posters</h3>
+            <p class="text-xs text-slate-400">Print and post at the lab entrance and 3D printer station</p>
+          </div>
+        </div>
+        <button onclick="closeQrModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+      <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div class="border-2 border-indigo-200 rounded-2xl p-4 text-center space-y-3 bg-indigo-50/30">
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-600 text-white">EQUIPMENT CHECKOUT</span>
+          <h4 class="text-sm font-extrabold text-slate-900">Student Tool Request Form</h4>
+          <div id="qr-container-tools" class="flex justify-center"></div>
+          <p class="text-[11px] text-slate-600">Scan to check live availability, shelf location, and request tools before desk UID scan.</p>
+        </div>
+        <div class="border-2 border-purple-200 rounded-2xl p-4 text-center space-y-3 bg-purple-50/30">
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-600 text-white">3D PRINTING STATION</span>
+          <h4 class="text-sm font-extrabold text-slate-900">3D Print Request Form (.ZIP Upload)</h4>
+          <div id="qr-container-print" class="flex justify-center"></div>
+          <p class="text-[11px] text-slate-600">Scan to choose <strong>Creality K2</strong> or <strong>Elegoo Neptune 4 Max</strong> and upload your .ZIP print file (1 submission only).</p>
+          <button type="button" onclick="copyShareLink('print3d')" class="px-3 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-900 text-[11px] font-bold">
+            Copy 3D Print Form URL
+          </button>
+        </div>
+      </div>
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Print QR Posters</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 7: ADD NEW INVENTORY ITEM
+  ====================================================================== -->
+  <div id="modal-add-item" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <h3 class="text-base font-extrabold">Add New Tool / Component</h3>
+        <button onclick="closeAddItemModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+      <form onsubmit="handleAddNewItem(event)" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Item Name *</label>
+          <input type="text" id="new-item-name" required placeholder="e.g. Jetson Orin Nano Developer Kit" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Category *</label>
+            <select id="new-item-category" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50">
+              <option>Robots</option>
+              <option>Computing</option>
+              <option>Sensing</option>
+              <option>Power</option>
+              <option>Projects</option>
+              <option>Kits</option>
+              <option>Misc Electronics</option>
+              <option>Cables &amp; Wires</option>
+              <option>Tools</option>
+              <option>Stationary</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Quantity *</label>
+            <input type="number" id="new-item-qty" min="1" value="1" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Storage Location *</label>
+          <input type="text" id="new-item-location" required placeholder="e.g. Cabinet B — Drawer 1" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Condition / Notes</label>
+          <input type="text" id="new-item-notes" placeholder="e.g. Includes power supply &amp; SD card" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-700 pt-1">
+          <input type="checkbox" id="new-item-prof" class="rounded text-indigo-600" />
+          <span>Requires Professor Permission ("Not there, ask the professor")</span>
+        </label>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeAddItemModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600">Cancel</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Add to Inventory</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 8: PROFESSOR ALIGNMENT MEETING CHECKLIST
+  ====================================================================== -->
+  <div id="modal-professor" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="bg-amber-600 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-100">Governance &amp; Policy</span>
+          <h3 class="text-base font-extrabold">Professor Alignment Meeting Agenda</h3>
+        </div>
+        <button onclick="closeProfessorModal()" class="text-white/90 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+      <div class="p-5 space-y-3 text-xs text-slate-700 leading-relaxed">
+        <p class="font-medium text-slate-800">
+          While this control center standardizes tracking, UID card verification, and 3D print logging, schedule a 15-minute alignment meeting with the professor to confirm:
+        </p>
+        <ul class="space-y-2 list-disc pl-4">
+          <li><strong>Maximum Borrow Duration &amp; Extensions:</strong> Standard loan window (e.g. 7 days for sensors/boards vs. semester-long for Senior Design teams).</li>
+          <li><strong>Restricted High-Value Equipment:</strong> Confirm which robots (Hexapod, WidowX/Troseen arms, ROSbots) require written professor approval before checkout.</li>
+          <li><strong>Overdue &amp; Damaged Hardware Policy:</strong> Protocol when items are returned late or damaged (e.g. LiPo batteries, RealSense cameras).</li>
+          <li><strong>Consumables vs. Returnable Tools:</strong> Separate tracking for expendables (zip ties, tape, resistors, filament) vs. serialized hardware.</li>
+          <li><strong>3D Print Quotas &amp; Priority:</strong> Filament weight limits per student/team and priority rules for capstone/competition deadlines.</li>
+          <li><strong>University IT / RFID Reader Format:</strong> Confirm whether the campus ID card reader outputs decimal student ID numbers or hex badge UIDs.</li>
+        </ul>
+        <div class="pt-2 flex justify-end">
+          <button onclick="closeProfessorModal()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">Got It</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 9: IMMUTABLE UID AUDIT LOG
+  ====================================================================== -->
+  <div id="modal-audit" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[85vh]">
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-extrabold">University ID (UID) Check-In / Check-Out Log</h3>
+          <p class="text-xs text-slate-400">Permanent timestamped record of every card scan at the lab desk</p>
+        </div>
+        <button onclick="closeAuditModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+      </div>
+      <div id="audit-log-list" class="p-5 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       APPLICATION JAVASCRIPT — MODULAR POST-LAUNCH EDITABLE ARCHITECTURE
+       SECTION 1: LAB_CONFIG & DEFAULT DATA
+       SECTION 2: PERSISTENT STATE & CLOUD SYNC ENGINE
+       SECTION 3: UI HELPERS, LOGO, HARDWARE ART, QR ENCODER & CSV PARSER
+       SECTION 4: ROLE SWITCHING, STUDENT QR LOCK MODE & STAFF PIN
+       SECTION 5: POST-LAUNCH SITE CUSTOMIZER, BACKUP & AI PROMPT GENERATOR
+       SECTION 6: STUDENT TOOL & 3D PRINT PORTALS
+       SECTION 7: LAB ASSISTANT DASHBOARD RENDERERS & ITEM EDITOR
+       SECTION 8: STUDENT UID CARD SCANNER CHECK-IN / CHECK-OUT
+       SECTION 9: 3D PRINT QUEUE, GOOGLE FORM BRIDGE & .TXT EXPORTS
+  ====================================================================== -->
+  <script>
+    // =========================================================================
+    // SECTION 1: LAB_CONFIG & DEFAULT SEED DATA (EDITABLE POST-LAUNCH)
+    // =========================================================================
+    const DEFAULT_LAB_CONFIG = {
+      labTitle: "AIRC Lab Control Center",
+      labSubtitle: "RIT Dubai • Standardized Inventory • UID Card Check-In/Out • 3D Print Queue",
+      printers: [
+        { name: "Creality K2", desc: "High-speed enclosed multi-material printer" },
+        { name: "Elegoo Neptune 4 Max", desc: "Large-format build volume (420×420×480 mm)" }
+      ],
+      materials: [
+        "PLA+ Black",
+        "PLA+ White",
+        "PETG Black",
+        "TPU Flexible",
+        "ABS Grey"
+      ]
+    };
+
+    const INITIAL_INVENTORY = [
+      { id: "AIRC-001", sno: 2, name: "Hexapod Phantom X MK III", category: "Robots", totalQty: 2, availableQty: 2, location: "Robotics Bay A — Shelf 1", notes: "", askProfessor: true },
+      { id: "AIRC-002", sno: 9, name: "Husarion ROSbot Kits", category: "Robots", totalQty: 4, availableQty: 4, location: "Robotics Bay A — Shelf 1", notes: "", askProfessor: true },
+      { id: "AIRC-003", sno: 10, name: "Robotis Humanoid Robot kit", category: "Robots", totalQty: 2, availableQty: 2, location: "Robotics Bay A — Shelf 1", notes: "", askProfessor: true },
+      { id: "AIRC-004", sno: 11, name: "MakeBlock mBot", category: "Robots", totalQty: 1, availableQty: 1, location: "Robotics Bay A — Shelf 1", notes: "", askProfessor: true },
+      { id: "AIRC-005", sno: 12, name: "Troseen WX-250 5dof robotic arm", category: "Robots", totalQty: 3, availableQty: 2, location: "Robotics Bay A — Shelf 1", notes: "", askProfessor: true },
+      { id: "AIRC-006", sno: 7, name: "RPi 4 (2018)", category: "Computing", totalQty: 5, availableQty: 5, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: false },
+      { id: "AIRC-007", sno: 8, name: "RPi 2011.12 (red)", category: "Computing", totalQty: 2, availableQty: 2, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: false },
+      { id: "AIRC-008", sno: 8, name: "RPi 2011.12", category: "Computing", totalQty: 8, availableQty: 5, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "3 Dead", askProfessor: false },
+      { id: "AIRC-009", sno: 9, name: "RPi 3 B+", category: "Computing", totalQty: 1, availableQty: 0, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "Dead", askProfessor: true },
+      { id: "AIRC-010", sno: 10, name: "RPi 3 B+ 1.2", category: "Computing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "No Wifi", askProfessor: false },
+      { id: "AIRC-011", sno: 11, name: "Nvidia P4350", category: "Computing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: true },
+      { id: "AIRC-012", sno: 12, name: "UBX 40 Daughterboard SDR", category: "Computing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: true },
+      { id: "AIRC-013", sno: 3, name: "box with arduino portenta", category: "Computing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: false },
+      { id: "AIRC-014", sno: 4, name: "arduino nano33 IOT", category: "Computing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: false },
+      { id: "AIRC-015", sno: 15, name: "Hussarion core 2 controller board", category: "Computing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: false },
+      { id: "AIRC-016", sno: 16, name: "Hann Star K MV-4 PCB", category: "Computing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: false },
+      { id: "AIRC-017", sno: 6, name: "arduino uno", category: "Computing", totalQty: 3, availableQty: 3, location: "Cabinet B — Drawer 1 (Boards & Pi)", notes: "", askProfessor: false },
+      { id: "AIRC-018", sno: 3, name: "RPlidar A1", category: "Sensing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 2 (Sensors & LiDAR)", notes: "", askProfessor: false },
+      { id: "AIRC-019", sno: 4, name: "RPlidar A3", category: "Sensing", totalQty: 1, availableQty: 0, location: "Cabinet B — Drawer 2 (Sensors & LiDAR)", notes: "", askProfessor: false },
+      { id: "AIRC-020", sno: 7, name: "ultrasonic sensors", category: "Sensing", totalQty: 10, availableQty: 10, location: "Cabinet B — Drawer 2 (Sensors & LiDAR)", notes: "", askProfessor: false },
+      { id: "AIRC-021", sno: 21, name: "MH MQ Smoke detector", category: "Sensing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 2 (Sensors & LiDAR)", notes: "", askProfessor: false },
+      { id: "AIRC-022", sno: 9, name: "intel realsense camera d435", category: "Sensing", totalQty: 2, availableQty: 1, location: "Cabinet B — Drawer 2 (Sensors & LiDAR)", notes: "", askProfessor: false },
+      { id: "AIRC-023", sno: 10, name: "MYO Smart Band (Biorobotics)", category: "Sensing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 2 (Sensors & LiDAR)", notes: "", askProfessor: false },
+      { id: "AIRC-024", sno: 11, name: "leap motion", category: "Sensing", totalQty: 1, availableQty: 1, location: "Cabinet B — Drawer 2 (Sensors & LiDAR)", notes: "", askProfessor: false },
+      { id: "AIRC-025", sno: 6, name: "12 V DC Adapter", category: "Power", totalQty: 2, availableQty: 2, location: "Safety Locker C — LiPo & Power Bin", notes: "", askProfessor: false },
+      { id: "AIRC-026", sno: 36, name: "lipo battery chargers", category: "Power", totalQty: 5, availableQty: 5, location: "Safety Locker C — LiPo & Power Bin", notes: "", askProfessor: false },
+      { id: "AIRC-027", sno: 13, name: "power regulator module", category: "Power", totalQty: 2, availableQty: 2, location: "Safety Locker C — LiPo & Power Bin", notes: "", askProfessor: false },
+      { id: "AIRC-028", sno: 1, name: "power regulator module with us plug", category: "Power", totalQty: 1, availableQty: 1, location: "Safety Locker C — LiPo & Power Bin", notes: "", askProfessor: false },
+      { id: "AIRC-029", sno: 29, name: "Treedix breadboard", category: "Power", totalQty: 1, availableQty: 1, location: "Safety Locker C — LiPo & Power Bin", notes: "", askProfessor: false },
+      { id: "AIRC-030", sno: 20, name: "box with batteries", category: "Power", totalQty: 8, availableQty: 8, location: "Safety Locker C — LiPo & Power Bin", notes: "", askProfessor: false },
+      { id: "AIRC-031", sno: 1, name: "DS Project (uses Altera board)", category: "Projects", totalQty: 1, availableQty: 1, location: "Project Display Rack D", notes: "Faculty Research Display", askProfessor: true },
+      { id: "AIRC-032", sno: 6, name: "mosaed project", category: "Projects", totalQty: 1, availableQty: 1, location: "Project Display Rack D", notes: "Capstone Archive", askProfessor: true },
+      { id: "AIRC-033", sno: 7, name: "excavator robot project", category: "Projects", totalQty: 1, availableQty: 1, location: "Project Display Rack D", notes: "Capstone Archive", askProfessor: true },
+      { id: "AIRC-034", sno: 8, name: "boat project", category: "Projects", totalQty: 1, availableQty: 1, location: "Project Display Rack D", notes: "Capstone Archive", askProfessor: true },
+      { id: "AIRC-035", sno: 2, name: "Junkbot kit", category: "Kits", totalQty: 1, availableQty: 1, location: "Cabinet A — Shelf 3 (Kits)", notes: "", askProfessor: false },
+      { id: "AIRC-036", sno: 3, name: "2 wheel Arduino Robot chassis kit", category: "Kits", totalQty: 3, availableQty: 3, location: "Cabinet A — Shelf 3 (Kits)", notes: "", askProfessor: false },
+      { id: "AIRC-037", sno: 4, name: "Rc car chassis with battery", category: "Kits", totalQty: 1, availableQty: 1, location: "Cabinet A — Shelf 3 (Kits)", notes: "", askProfessor: false },
+      { id: "AIRC-038", sno: 5, name: "lego mindstorm nxt kit", category: "Kits", totalQty: 1, availableQty: 1, location: "Cabinet A — Shelf 3 (Kits)", notes: "", askProfessor: false },
+      { id: "AIRC-039", sno: 2, name: "box with JST-XH connector kit , arduino wires", category: "Misc Electronics", totalQty: 1, availableQty: 1, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-040", sno: 5, name: "led resistors capacitors", category: "Misc Electronics", totalQty: 1, availableQty: 1, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-041", sno: 15, name: "7 incl fp color monitor", category: "Misc Electronics", totalQty: 2, availableQty: 2, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-042", sno: 16, name: "rpi touch screen display(ribbon connector)", category: "Misc Electronics", totalQty: 1, availableQty: 1, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-043", sno: 43, name: "RFID RC522 sensor", category: "Misc Electronics", totalQty: 1, availableQty: 1, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-044", sno: 44, name: "LCD Display 16x2", category: "Misc Electronics", totalQty: 1, availableQty: 1, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-045", sno: 8, name: "analog multiplexer chip", category: "Misc Electronics", totalQty: 4, availableQty: 4, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-046", sno: 5, name: "Wireless Keyboard Mouse Set", category: "Misc Electronics", totalQty: 1, availableQty: 1, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-047", sno: 17, name: "box with l298n,2 imu sensor, 3 bluetooth module,2 relay switch", category: "Misc Electronics", totalQty: 1, availableQty: 1, location: "Parts Organizer E — Bins 1–12", notes: "", askProfessor: false },
+      { id: "AIRC-048", sno: 12, name: "ethernet cables", category: "Cables & Wires", totalQty: 3, availableQty: 3, location: "Wall Rack F — Cable Hooks", notes: "", askProfessor: false },
+      { id: "AIRC-049", sno: 13, name: "arduino wire", category: "Cables & Wires", totalQty: 1, availableQty: 1, location: "Wall Rack F — Cable Hooks", notes: "", askProfessor: false },
+      { id: "AIRC-050", sno: 14, name: "usb cable extender 2m", category: "Cables & Wires", totalQty: 1, availableQty: 1, location: "Wall Rack F — Cable Hooks", notes: "", askProfessor: false },
+      { id: "AIRC-051", sno: 18, name: "box with manuals cables for robotic arm", category: "Cables & Wires", totalQty: 1, availableQty: 1, location: "Wall Rack F — Cable Hooks", notes: "", askProfessor: false },
+      { id: "AIRC-052", sno: 28, name: "wire rolls", category: "Cables & Wires", totalQty: 4, availableQty: 4, location: "Wall Rack F — Cable Hooks", notes: "", askProfessor: false },
+      { id: "AIRC-053", sno: 19, name: "hammer", category: "Tools", totalQty: 1, availableQty: 1, location: "Workbench Pegboard & Tool Chest G", notes: "", askProfessor: false },
+      { id: "AIRC-054", sno: 21, name: "box with allen key assorted", category: "Tools", totalQty: 1, availableQty: 1, location: "Workbench Pegboard & Tool Chest G", notes: "", askProfessor: false },
+      { id: "AIRC-055", sno: 22, name: "screwdrivers", category: "Tools", totalQty: 13, availableQty: 13, location: "Workbench Pegboard & Tool Chest G", notes: "", askProfessor: false },
+      { id: "AIRC-056", sno: 23, name: "wire strippers", category: "Tools", totalQty: 2, availableQty: 2, location: "Workbench Pegboard & Tool Chest G", notes: "", askProfessor: false },
+      { id: "AIRC-057", sno: 37, name: "soldering fume extractor", category: "Tools", totalQty: 2, availableQty: 2, location: "Workbench Pegboard & Tool Chest G", notes: "", askProfessor: false },
+      { id: "AIRC-058", sno: 1, name: "posters, packaging equipments", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-059", sno: 9, name: "empty tripod boxes", category: "Stationary", totalQty: 3, availableQty: 3, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-060", sno: 1, name: "foam mat", category: "Stationary", totalQty: 2, availableQty: 2, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-061", sno: 24, name: "scissor", category: "Stationary", totalQty: 3, availableQty: 3, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-062", sno: 25, name: "marker", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-063", sno: 26, name: "zip tie packet", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-064", sno: 27, name: "measuring tapes", category: "Stationary", totalQty: 4, availableQty: 4, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-065", sno: 14, name: "tripod", category: "Stationary", totalQty: 4, availableQty: 4, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-066", sno: 29, name: "silver tape", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-067", sno: 30, name: "masking tape", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-068", sno: 31, name: "thread seal", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-069", sno: 32, name: "chalkine", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-070", sno: 33, name: "heat shrink", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-071", sno: 34, name: "staple", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false },
+      { id: "AIRC-072", sno: 35, name: "rubber band packet", category: "Stationary", totalQty: 1, availableQty: 1, location: "Supply Cabinet H — Top Shelf", notes: "", askProfessor: false }
+    ];
+
+    const STUDENT_DIRECTORY = {
+      "UID-7049211": { name: "Sabrina Al Bukhari", email: "sabrina.b@g.rit.edu" },
+      "UID-4920184": { name: "Rohan Ashar", email: "rohan.ashar@g.rit.edu" },
+      "UID-8831042": { name: "Gaurav Kewalramani", email: "gaurav.k@g.rit.edu" },
+      "UID-3819204": { name: "Muzaffar Siddiqui", email: "muzaffar.s@g.rit.edu" },
+      "UID-5102938": { name: "Yusuf Mirza", email: "yusuf.m@g.rit.edu" }
+    };
+
+    const INITIAL_TAKEN_LOANS = [
+      {
+        loanId: "LN-1001",
+        itemId: "AIRC-019",
+        itemName: "RPlidar A3",
+        qty: 1,
+        borrowerName: "Rohan Ashar",
+        borrowerUid: "UID-4920184",
+        borrowerEmail: "rohan.ashar@g.rit.edu",
+        purpose: "Hexapod SLAM Navigation",
+        checkoutDate: "2026-11-22",
+        returnDate: "2026-12-01"
+      },
+      {
+        loanId: "LN-1002",
+        itemId: "AIRC-022",
+        itemName: "intel realsense camera d435",
+        qty: 1,
+        borrowerName: "Muzaffar Siddiqui",
+        borrowerUid: "UID-3819204",
+        borrowerEmail: "muzaffar.s@g.rit.edu",
+        purpose: "3D Depth Obstacle Avoidance",
+        checkoutDate: "2026-11-23",
+        returnDate: "2026-12-03"
+      },
+      {
+        loanId: "LN-1003",
+        itemId: "AIRC-005",
+        itemName: "Troseen WX-250 5dof robotic arm",
+        qty: 1,
+        borrowerName: "Yusuf Mirza",
+        borrowerUid: "UID-5102938",
+        borrowerEmail: "yusuf.m@g.rit.edu",
+        purpose: "Inverse Kinematics Control Lab",
+        checkoutDate: "2026-11-24",
+        returnDate: "2026-12-05"
+      }
+    ];
+
+    const INITIAL_REQUESTS = [
+      {
+        reqId: "REQ-2041",
+        itemId: "AIRC-006",
+        itemName: "RPi 4 (2018)",
+        qty: 1,
+        studentName: "Sabrina Al Bukhari",
+        studentEmail: "sabrina.b@g.rit.edu",
+        purpose: "ROS2 Edge Compute Node",
+        returnDate: "2026-12-04",
+        submittedAt: "2026-11-25 14:15",
+        type: "BORROW"
+      },
+      {
+        reqId: "REQ-2042",
+        itemId: "AIRC-017",
+        itemName: "arduino uno",
+        qty: 1,
+        studentName: "Gaurav Kewalramani",
+        studentEmail: "gaurav.k@g.rit.edu",
+        purpose: "Emirates Robotics Competition Sensor Rig",
+        returnDate: "2026-12-09",
+        submittedAt: "2026-11-25 16:40",
+        type: "BORROW"
+      }
+    ];
+
+    const INITIAL_PRINT_ORDERS = [
+      {
+        orderId: "3DP-501",
+        studentName: "Gaurav Kewalramani",
+        studentUid: "UID-8831042",
+        printer: "Creality K2",
+        fileName: "lidar_mount_bracket_v3.zip",
+        fileLink: "https://drive.google.com/drive/folders/airc-3d-prints",
+        material: "PETG Black",
+        infill: "35%",
+        estTime: "3h 40m",
+        otherRequests: "Hexapod top LiDAR turret mount — print with tree supports",
+        status: "Printing",
+        submittedAt: "2026-11-25 11:20",
+        source: "3D Print QR Form"
+      },
+      {
+        orderId: "3DP-502",
+        studentName: "Muzaffar Siddiqui",
+        studentUid: "UID-3819204",
+        printer: "Elegoo Neptune 4 Max",
+        fileName: "hexapod_tibia_joint_x2.zip",
+        fileLink: "https://drive.google.com/drive/folders/airc-3d-prints",
+        material: "PLA+ Grey",
+        infill: "50%",
+        estTime: "5h 15m",
+        otherRequests: "Replacement leg links x2 — use brim for bed adhesion",
+        status: "Completed",
+        submittedAt: "2026-11-24 15:05",
+        source: "3D Print QR Form"
+      }
+    ];
+
+    const INITIAL_AUDIT_LOG = [
+      {
+        id: "LOG-01",
+        timestamp: "2026-11-22 10:14",
+        action: "CHECKOUT",
+        itemName: "RPlidar A3 (AIRC-019)",
+        studentName: "Rohan Ashar",
+        studentUid: "UID-4920184",
+        details: "UID Card verified at Lab Desk • Due 2026-12-01"
+      },
+      {
+        id: "LOG-02",
+        timestamp: "2026-11-23 13:20",
+        action: "CHECKOUT",
+        itemName: "intel realsense camera d435 (AIRC-022)",
+        studentName: "Muzaffar Siddiqui",
+        studentUid: "UID-3819204",
+        details: "UID Card verified at Lab Desk • Due 2026-12-03"
+      },
+      {
+        id: "LOG-03",
+        timestamp: "2026-11-24 15:45",
+        action: "CHECKOUT",
+        itemName: "Troseen WX-250 5dof robotic arm (AIRC-005)",
+        studentName: "Yusuf Mirza",
+        studentUid: "UID-5102938",
+        details: "UID Card verified at Lab Desk • Due 2026-12-05"
+      }
+    ];
+
+    const GOOGLE_APPS_SCRIPT_TEMPLATE = `function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AIRC_DB") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("AIRC_DB");
+  var raw = sheet.getRange("A1").getValue();
+  var output = raw ? raw : JSON.stringify({ empty: true });
+  return ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AIRC_DB") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("AIRC_DB");
+  if (e && e.postData && e.postData.contents) {
+    sheet.getRange("A1").setValue(e.postData.contents);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+    // =========================================================================
+    // SECTION 2: APPLICATION STATE, LOCALSTORAGE & CLOUD SYNC
+    // =========================================================================
+    const STORAGE_KEY = "AIRC_LAB_SYSTEM_V6";
+    const PRINT3D_LOCK_KEY = "AIRC_PRINT3D_SUBMITTED_LOCK";
+
+    function getDefaultState() {
+      return {
+        schemaVersion: 6,
+        config: JSON.parse(JSON.stringify(DEFAULT_LAB_CONFIG)),
+        inventory: JSON.parse(JSON.stringify(INITIAL_INVENTORY)),
+        takenLoans: JSON.parse(JSON.stringify(INITIAL_TAKEN_LOANS)),
+        requests: JSON.parse(JSON.stringify(INITIAL_REQUESTS)),
+        printOrders: JSON.parse(JSON.stringify(INITIAL_PRINT_ORDERS)),
+        auditLog: JSON.parse(JSON.stringify(INITIAL_AUDIT_LOG)),
+        staffPin: "2026",
+        cloudSyncUrl: "",
+        googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSf_AIRC_3D_PRINT_FORM/viewform",
+        lastUpdated: Date.now()
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("AIRC_LAB_SYSTEM_V5");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const base = getDefaultState();
+          const merged = Object.assign({}, base, parsed);
+          merged.config = Object.assign({}, base.config, parsed.config || {});
+          return merged;
+        }
+      } catch (err) {
+        console.warn("Could not read saved state, using defaults:", err);
+      }
+      return getDefaultState();
+    }
+
+    let appState = loadState();
+    let currentTab = "requests";
+    let selectedStudentItemId = null;
+    let pendingUidAction = null;
+    let isStudentLockedMode = false;
+    let isStaffUnlocked = true;
+    let pendingAssistantZip = null;
+    let pendingStudentZip = null;
+
+    function saveState(skipCloud = false) {
+      appState.lastUpdated = Date.now();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (err) {
+        console.warn("LocalStorage quota warning:", err);
+      }
+      if (!skipCloud && appState.cloudSyncUrl) {
+        pushToCloud();
+      }
+    }
+
+    function updateSyncStatusUi() {
+      const pill = document.getElementById("sync-status-pill");
+      const manualBtn = document.getElementById("btn-manual-sync");
+      if (!pill) return;
+      if (appState.cloudSyncUrl) {
+        pill.textContent = "LIVE CLOUD SYNC";
+        pill.className = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/25 text-indigo-200 border border-indigo-400/40";
+        if (manualBtn) manualBtn.classList.remove("hidden");
+      } else {
+        pill.textContent = "LOCAL MODE";
+        pill.className = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        if (manualBtn) manualBtn.classList.add("hidden");
+      }
+    }
+
+    async function pushToCloud() {
+      if (!appState.cloudSyncUrl) return;
+      try {
+        await fetch(appState.cloudSyncUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(appState)
+        });
+        updateSyncStatusUi();
+      } catch (err) {
+        console.warn("Cloud push error:", err);
+      }
+    }
+
+    async function pullFromCloud(silent = false) {
+      if (!appState.cloudSyncUrl) return;
+      try {
+        const res = await fetch(appState.cloudSyncUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (data && !data.empty && Array.isArray(data.inventory) && data.inventory.length > 0) {
+          const localUpdated = appState.lastUpdated || 0;
+          const remoteUpdated = data.lastUpdated || 0;
+          if (remoteUpdated >= localUpdated || !silent) {
+            const base = getDefaultState();
+            appState = Object.assign({}, base, data);
+            appState.config = Object.assign({}, base.config, data.config || {});
+            saveState(true);
+            applyDynamicConfigToUi();
+            populateCategoryDropdowns();
+            renderAllAssistantViews();
+          }
+        } else if (!silent) {
+          await pushToCloud();
+        }
+        updateSyncStatusUi();
+        if (!silent) showToast("Connected & synced with live Google Sheet!", "success");
+      } catch (err) {
+        console.warn("Cloud pull error:", err);
+        if (!silent) showToast("Could not reach Google Apps Script URL. Check deployment permissions.", "error");
+      }
+    }
+
+    function manualCloudRefresh() {
+      pullFromCloud(false);
+    }
+
+    // =========================================================================
+    // SECTION 3: UI UTILITIES, HARDWARE ILLUSTRATIONS, QR ENCODER & CSV PARSER
+    // =========================================================================
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function getCurrentTimestamp() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, "0");
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+      const styles = {
+        success: "bg-emerald-900 text-emerald-50 border-emerald-500",
+        error: "bg-rose-900 text-rose-50 border-rose-500",
+        warning: "bg-amber-900 text-amber-50 border-amber-500",
+        info: "bg-slate-900 text-white border-indigo-500"
+      };
+      const el = document.createElement("div");
+      el.className = `pointer-events-auto rounded-xl border-l-4 px-4 py-3 text-xs font-semibold shadow-xl transition-all duration-300 ${styles[type] || styles.info}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 300);
+      }, 3600);
+    }
+
+    function applyDynamicConfigToUi() {
+      const cfg = appState.config || DEFAULT_LAB_CONFIG;
+      const titleEl = document.getElementById("ui-lab-title");
+      const subEl = document.getElementById("ui-lab-subtitle");
+      if (titleEl) titleEl.textContent = cfg.labTitle || DEFAULT_LAB_CONFIG.labTitle;
+      if (subEl) subEl.textContent = cfg.labSubtitle || DEFAULT_LAB_CONFIG.labSubtitle;
+
+      const printers = Array.isArray(cfg.printers) && cfg.printers.length > 0 ? cfg.printers : DEFAULT_LAB_CONFIG.printers;
+      const materials = Array.isArray(cfg.materials) && cfg.materials.length > 0 ? cfg.materials : DEFAULT_LAB_CONFIG.materials;
+
+      const printerNamesText = printers.map(p => p.name).join(" & ");
+      const sumEl = document.getElementById("ui-printer-list-summary");
+      const stuSumEl = document.getElementById("ui-stu-printer-names");
+      if (sumEl) sumEl.textContent = printerNamesText;
+      if (stuSumEl) stuSumEl.textContent = printers.map(p => p.name).join(" or ");
+
+      const assistantPrinterSel = document.getElementById("print-printer-select");
+      if (assistantPrinterSel) {
+        assistantPrinterSel.innerHTML = printers.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join("");
+      }
+
+      const stuPrinterGrid = document.getElementById("stu-printer-radio-grid");
+      if (stuPrinterGrid) {
+        stuPrinterGrid.innerHTML = printers.map((p, idx) => `
+          <label class="cursor-pointer">
+            <input type="radio" name="stu-printer-choice" value="${escapeHtml(p.name)}" required ${idx === 0 ? "checked" : ""} class="peer sr-only" />
+            <div class="rounded-xl border-2 border-slate-200 peer-checked:border-purple-600 peer-checked:bg-purple-50/70 p-3.5 transition">
+              <div class="text-sm font-extrabold text-slate-900">${escapeHtml(p.name)}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(p.desc || "AIRC Lab 3D Printer")}</div>
+            </div>
+          </label>
+        `).join("");
+      }
+
+      ["print-material", "stu-print-material"].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (sel) {
+          sel.innerHTML = materials.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+        }
+      });
+    }
+
+    function getItemPictureHtml(item, heightClass = "h-32") {
+      if (item.customPhoto) {
+        return `<img src="${escapeHtml(item.customPhoto)}" alt="${escapeHtml(item.name)}" class="w-full ${heightClass} object-cover rounded-xl border border-slate-200 bg-slate-100" />`;
+      }
+
+      const palette = {
+        "Robots": { bg: "#eef2ff", accent: "#4f46e5", sub: "#c7d2fe", glyph: `<circle cx="100" cy="42" r="12" fill="#4f46e5"/><path d="M70 72 L100 42 L130 72 M62 76 H78 M122 76 H138 M88 26 H112" stroke="#4f46e5" stroke-width="5" stroke-linecap="round" fill="none"/>` },
+        "Computing": { bg: "#ecfeff", accent: "#0891b2", sub: "#a5f3fc", glyph: `<rect x="74" y="28" width="52" height="44" rx="6" fill="#0891b2"/><rect x="84" y="38" width="32" height="24" rx="2" fill="#ecfeff"/><path d="M64 38 H74 M64 50 H74 M64 62 H74 M126 38 H136 M126 50 H136 M126 62 H136" stroke="#0891b2" stroke-width="4" stroke-linecap="round"/>` },
+        "Sensing": { bg: "#f0fdf4", accent: "#16a34a", sub: "#bbf7d0", glyph: `<rect x="68" y="32" width="64" height="36" rx="8" fill="#16a34a"/><circle cx="88" cy="50" r="8" fill="#f0fdf4"/><circle cx="112" cy="50" r="8" fill="#f0fdf4"/><circle cx="88" cy="50" r="3" fill="#16a34a"/><circle cx="112" cy="50" r="3" fill="#16a34a"/>` },
+        "Power": { bg: "#fffbeb", accent: "#d97706", sub: "#fde68a", glyph: `<rect x="72" y="30" width="56" height="40" rx="6" fill="#d97706"/><path d="M102 36 L92 51 H101 L97 64 L109 48 H100 Z" fill="#fffbeb"/>` },
+        "Projects": { bg: "#faf5ff", accent: "#7e22ce", sub: "#e9d5ff", glyph: `<polygon points="100,24 132,42 132,70 100,86 68,70 68,42" fill="#7e22ce"/><circle cx="100" cy="55" r="10" fill="#faf5ff"/>` },
+        "Kits": { bg: "#eff6ff", accent: "#2563eb", sub: "#bfdbfe", glyph: `<rect x="68" y="34" width="64" height="38" rx="6" fill="#2563eb"/><path d="M86 34 V26 H114 V34" stroke="#2563eb" stroke-width="5" fill="none"/><circle cx="86" cy="53" r="6" fill="#eff6ff"/><circle cx="114" cy="53" r="6" fill="#eff6ff"/>` },
+        "Misc Electronics": { bg: "#f0f9ff", accent: "#0284c7", sub: "#bae6fd", glyph: `<rect x="72" y="30" width="56" height="40" rx="5" fill="#0284c7"/><circle cx="88" cy="45" r="5" fill="#f0f9ff"/><circle cx="112" cy="45" r="5" fill="#f0f9ff"/><rect x="84" y="56" width="32" height="6" rx="3" fill="#f0f9ff"/>` },
+        "Cables & Wires": { bg: "#f8fafc", accent: "#475569", sub: "#cbd5e1", glyph: `<path d="M74 64 C74 32, 126 32, 126 64" stroke="#475569" stroke-width="6" fill="none" stroke-linecap="round"/><rect x="68" y="60" width="12" height="14" rx="2" fill="#475569"/><rect x="120" y="60" width="12" height="14" rx="2" fill="#475569"/>` },
+        "Tools": { bg: "#fff1f2", accent: "#e11d48", sub: "#fecdd3", glyph: `<path d="M76 68 L116 28 M110 24 L124 38 M72 62 L84 74" stroke="#e11d48" stroke-width="6" stroke-linecap="round"/>` },
+        "Stationary": { bg: "#f8fafc", accent: "#334155", sub: "#e2e8f0", glyph: `<rect x="76" y="28" width="48" height="44" rx="6" fill="#334155"/><path d="M86 42 H114 M86 52 H114 M86 62 H102" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>` }
+      };
+
+      const theme = palette[item.category] || palette["Misc Electronics"];
+      return `
+        <div class="w-full ${heightClass} rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative" style="background:${theme.bg}">
+          <svg viewBox="0 0 200 100" class="w-full h-full">
+            <circle cx="100" cy="50" r="38" fill="${theme.sub}" opacity="0.55"/>
+            ${theme.glyph}
+            <text x="100" y="92" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="${theme.accent}">${escapeHtml(item.id)} • ${escapeHtml(item.category.toUpperCase())}</text>
+          </svg>
+        </div>
+      `;
+    }
+
+    function renderQrSvg(text, size = 164) {
+      const dataBytes = Array.from(new TextEncoder().encode(text));
+      const versions = [
+        { v: 1, total: 26, data: 19, ecc: 7, align: [] },
+        { v: 2, total: 44, data: 34, ecc: 10, align: [6, 18] },
+        { v: 3, total: 70, data: 55, ecc: 15, align: [6, 22] },
+        { v: 4, total: 100, data: 80, ecc: 20, align: [6, 26] },
+        { v: 5, total: 134, data: 108, ecc: 26, align: [6, 30] },
+        { v: 6, total: 172, data: 136, ecc: 36, align: [6, 34] }
+      ];
+      const spec = versions.find(s => s.data >= dataBytes.length + 2) || versions[versions.length - 1];
+      const maxPayload = spec.data - 2;
+      const payload = dataBytes.slice(0, maxPayload);
+
+      const bits = [];
+      const pushBits = (val, len) => {
+        for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1);
+      };
+      pushBits(0b0100, 4);
+      pushBits(payload.length, 8);
+      payload.forEach(b => pushBits(b, 8));
+      pushBits(0, Math.min(4, spec.data * 8 - bits.length));
+      while (bits.length % 8 !== 0) bits.push(0);
+      const padBytes = [0xec, 0x11];
+      let padIdx = 0;
+      while (bits.length < spec.data * 8) {
+        pushBits(padBytes[padIdx % 2], 8);
+        padIdx++;
+      }
+
+      const codewords = [];
+      for (let i = 0; i < bits.length; i += 8) {
+        let byte = 0;
+        for (let b = 0; b < 8; b++) byte = (byte << 1) | bits[i + b];
+        codewords.push(byte);
+      }
+
+      const gfExp = new Array(512);
+      const gfLog = new Array(256);
+      let x = 1;
+      for (let i = 0; i < 255; i++) {
+        gfExp[i] = x;
+        gfLog[x] = i;
+        x <<= 1;
+        if (x & 0x100) x ^= 0x11d;
+      }
+      for (let i = 255; i < 512; i++) gfExp[i] = gfExp[i - 255];
+      const gfMul = (a, b) => (a === 0 || b === 0) ? 0 : gfExp[gfLog[a] + gfLog[b]];
+
+      let gen = [1];
+      for (let i = 0; i < spec.ecc; i++) {
+        const next = new Array(gen.length + 1).fill(0);
+        const factor = gfExp[i];
+        for (let j = 0; j < gen.length; j++) {
+          next[j] ^= gen[j];
+          next[j + 1] ^= gfMul(gen[j], factor);
+        }
+        gen = next;
+      }
+
+      const eccBuf = codewords.concat(new Array(spec.ecc).fill(0));
+      for (let i = 0; i < codewords.length; i++) {
+        const coef = eccBuf[i];
+        if (coef !== 0) {
+          for (let j = 1; j < gen.length; j++) {
+            eccBuf[i + j] ^= gfMul(gen[j], coef);
+          }
+        }
+      }
+      const allCodewords = codewords.concat(eccBuf.slice(codewords.length));
+      const streamBits = [];
+      allCodewords.forEach(cw => {
+        for (let i = 7; i >= 0; i--) streamBits.push((cw >>> i) & 1);
+      });
+
+      const n = spec.v * 4 + 17;
+      const grid = Array.from({ length: n }, () => new Array(n).fill(null));
+      const reserved = Array.from({ length: n }, () => new Array(n).fill(false));
+
+      const setMod = (r, c, val, isRes = true) => {
+        if (r >= 0 && r < n && c >= 0 && c < n) {
+          grid[r][c] = val ? 1 : 0;
+          if (isRes) reserved[r][c] = true;
+        }
+      };
+
+      const placeFinder = (r0, c0) => {
+        for (let r = -1; r <= 7; r++) {
+          for (let c = -1; c <= 7; c++) {
+            const inBox = r >= 0 && r <= 6 && c >= 0 && c <= 6;
+            const dark = inBox && (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
+            setMod(r0 + r, c0 + c, dark, true);
+          }
+        }
+      };
+      placeFinder(0, 0);
+      placeFinder(0, n - 7);
+      placeFinder(n - 7, 0);
+
+      if (spec.align.length > 0) {
+        const coords = spec.align;
+        for (let i = 0; i < coords.length; i++) {
+          for (let j = 0; j < coords.length; j++) {
+            const ar = coords[i], ac = coords[j];
+            if ((ar === 6 && ac === 6) || (ar === 6 && ac === n - 7) || (ar === n - 7 && ac === 6)) continue;
+            for (let r = -2; r <= 2; r++) {
+              for (let c = -2; c <= 2; c++) {
+                const dark = Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0);
+                setMod(ar + r, ac + c, dark, true);
+              }
+            }
+          }
+        }
+      }
+
+      for (let i = 8; i < n - 8; i++) {
+        setMod(6, i, i % 2 === 0, true);
+        setMod(i, 6, i % 2 === 0, true);
+      }
+      setMod(n - 8, 8, 1, true);
+
+      for (let i = 0; i < 9; i++) {
+        if (i !== 6) { reserved[8][i] = true; reserved[i][8] = true; }
+      }
+      for (let i = 0; i < 8; i++) {
+        reserved[8][n - 1 - i] = true;
+        reserved[n - 1 - i][8] = true;
+      }
+
+      let bitIdx = 0;
+      let upward = true;
+      for (let col = n - 1; col > 0; col -= 2) {
+        if (col === 6) col--;
+        for (let step = 0; step < n; step++) {
+          const r = upward ? n - 1 - step : step;
+          for (let dx = 0; dx < 2; dx++) {
+            const c = col - dx;
+            if (!reserved[r][c]) {
+              const rawBit = bitIdx < streamBits.length ? streamBits[bitIdx++] : 0;
+              const maskedBit = ((r + c) % 2 === 0) ? (rawBit ^ 1) : rawBit;
+              grid[r][c] = maskedBit;
+            }
+          }
+        }
+        upward = !upward;
+      }
+
+      const fmt = [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0];
+      const fCoords1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+      const fCoords2 = [[n-1,8],[n-2,8],[n-3,8],[n-4,8],[n-5,8],[n-6,8],[n-7,8],[8,n-8],[8,n-7],[8,n-6],[8,n-5],[8,n-4],[8,n-3],[8,n-2],[8,n-1]];
+      for (let i = 0; i < 15; i++) {
+        grid[fCoords1[i][0]][fCoords1[i][1]] = fmt[i];
+        grid[fCoords2[i][0]][fCoords2[i][1]] = fmt[i];
+      }
+
+      const quiet = 2;
+      const totalMods = n + quiet * 2;
+      const cell = Math.max(3, Math.floor(size / totalMods));
+      const svgSize = cell * totalMods;
+      let rects = `<rect width="${svgSize}" height="${svgSize}" fill="#ffffff"/>`;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (grid[r][c] === 1) {
+            rects += `<rect x="${(c + quiet) * cell}" y="${(r + quiet) * cell}" width="${cell}" height="${cell}" fill="#0f172a"/>`;
+          }
+        }
+      }
+      return `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" class="rounded-xl border border-slate-200 shadow-inner mx-auto">${rects}</svg>`;
+    }
+
+    function parseCsvLine(line) {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === "," && !inQuotes) {
+          result.push(current.trim());
+          current = "";
+        } else {
+          current += ch;
+        }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    // =========================================================================
+    // SECTION 4: ROLE SWITCHING, STUDENT QR LOCK MODE & STAFF PIN UNLOCK
+    // =========================================================================
+    function applyRoleLockUi() {
+      const staffHeader = document.getElementById("staff-header-controls");
+      const staffKpi = document.getElementById("staff-kpi-strip");
+      const studentHeaderActions = document.getElementById("student-mode-header-actions");
+
+      if (isStudentLockedMode && !isStaffUnlocked) {
+        staffHeader.classList.add("hidden");
+        staffKpi.classList.add("hidden");
+        studentHeaderActions.classList.remove("hidden");
+      } else {
+        staffHeader.classList.remove("hidden");
+        staffKpi.classList.remove("hidden");
+        studentHeaderActions.classList.add("hidden");
+      }
+    }
+
+    function switchViewMode(mode, lockAsStudent = false, studentSubView = "tools") {
+      const assistantSec = document.getElementById("view-assistant");
+      const studentSec = document.getElementById("view-student");
+      const btnAssistant = document.getElementById("btn-mode-assistant");
+      const btnStudent = document.getElementById("btn-mode-student");
+
+      if (mode === "student") {
+        if (lockAsStudent) {
+          isStudentLockedMode = true;
+          isStaffUnlocked = false;
+        }
+        applyRoleLockUi();
+        assistantSec.classList.add("hidden");
+        studentSec.classList.remove("hidden");
+        btnStudent.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow";
+        btnAssistant.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white";
+        switchStudentSubView(studentSubView);
+      } else {
+        isStudentLockedMode = false;
+        isStaffUnlocked = true;
+        applyRoleLockUi();
+        studentSec.classList.add("hidden");
+        assistantSec.classList.remove("hidden");
+        btnAssistant.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow";
+        btnStudent.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white";
+        renderAllAssistantViews();
+      }
+    }
+
+    function switchStudentSubView(subview) {
+      const toolsDiv = document.getElementById("student-subview-tools");
+      const printDiv = document.getElementById("student-subview-print3d");
+      const tabTools = document.getElementById("student-tab-tools");
+      const tabPrint = document.getElementById("student-tab-print3d");
+      const headerBadge = document.getElementById("student-portal-badge");
+
+      if (subview === "print3d") {
+        toolsDiv.classList.add("hidden");
+        printDiv.classList.remove("hidden");
+        tabPrint.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition bg-purple-600 text-white shadow-sm";
+        tabTools.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-600 hover:bg-slate-100";
+        if (headerBadge) headerBadge.textContent = "Student 3D Printer Portal";
+        checkStudentPrintLockState();
+      } else {
+        printDiv.classList.add("hidden");
+        toolsDiv.classList.remove("hidden");
+        tabTools.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition bg-indigo-600 text-white shadow-sm";
+        tabPrint.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-600 hover:bg-slate-100";
+        if (headerBadge) headerBadge.textContent = "Student Equipment Portal";
+      }
+    }
+
+    function promptStaffUnlock() {
+      document.getElementById("unlock-pin-input").value = "";
+      document.getElementById("modal-staff-pin").classList.remove("hidden");
+      setTimeout(() => document.getElementById("unlock-pin-input").focus(), 50);
+    }
+
+    function closeStaffPinModal() {
+      document.getElementById("modal-staff-pin").classList.add("hidden");
+    }
+
+    function verifyStaffPinSubmit(e) {
+      e.preventDefault();
+      const entered = (document.getElementById("unlock-pin-input").value || "").trim();
+      const expected = appState.staffPin || "2026";
+      if (entered === expected) {
+        closeStaffPinModal();
+        switchViewMode("assistant");
+        showToast("TA / Professor Dashboard unlocked!", "success");
+      } else {
+        showToast("Incorrect Staff PIN.", "error");
+      }
+    }
+
+    function switchAssistantTab(tabName) {
+      currentTab = tabName;
+      const tabs = ["requests", "taken", "available", "checker", "prints"];
+      tabs.forEach(t => {
+        const panel = document.getElementById(`panel-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabName) {
+          panel.classList.remove("hidden");
+          btn.classList.remove("border", "border-slate-200");
+          btn.classList.add("border-2", "border-indigo-600", "bg-indigo-50/20");
+        } else {
+          panel.classList.add("hidden");
+          btn.classList.remove("border-2", "border-indigo-600", "bg-indigo-50/20");
+          btn.classList.add("border", "border-slate-200");
+        }
+      });
+      renderAllAssistantViews();
+    }
+
+    function updateKpisAndBadges() {
+      const totalUnits = appState.inventory.reduce((sum, i) => sum + (Number(i.totalQty) || 0), 0);
+      const availableUnits = appState.inventory.reduce((sum, i) => sum + (Number(i.availableQty) || 0), 0);
+      const takenUnits = appState.takenLoans.reduce((sum, l) => sum + (Number(l.qty) || 1), 0);
+      const pendingReqs = appState.requests.length;
+      const activePrints = appState.printOrders.filter(p => p.status !== "Picked Up").length;
+
+      document.getElementById("kpi-total-units").textContent = totalUnits;
+      document.getElementById("kpi-available-units").textContent = availableUnits;
+      document.getElementById("kpi-taken-units").textContent = takenUnits;
+      document.getElementById("kpi-pending-requests").textContent = pendingReqs;
+      document.getElementById("kpi-print-queue").textContent = activePrints;
+
+      document.getElementById("badge-tab-requests").textContent = pendingReqs;
+      document.getElementById("badge-tab-taken").textContent = appState.takenLoans.length;
+      document.getElementById("badge-tab-available").textContent = appState.inventory.filter(i => i.availableQty > 0).length;
+      document.getElementById("badge-tab-checker").textContent = appState.inventory.length;
+      document.getElementById("badge-tab-prints").textContent = appState.printOrders.length;
+    }
+
+    function populateCategoryDropdowns() {
+      const categories = [...new Set(appState.inventory.map(i => i.category))];
+      ["available-cat-filter", "checker-cat-filter"].forEach(selectId => {
+        const el = document.getElementById(selectId);
+        if (!el) return;
+        const currentVal = el.value || "ALL";
+        el.innerHTML = `<option value="ALL">All Categories (${categories.length})</option>` +
+          categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+        el.value = currentVal;
+      });
+    }
+
+    // =========================================================================
+    // SECTION 5: POST-LAUNCH SITE & DASHBOARD CUSTOMIZER, BACKUP & AI PROMPT
+    // =========================================================================
+    function openSiteEditorModal() {
+      const cfg = appState.config || DEFAULT_LAB_CONFIG;
+      document.getElementById("cfg-lab-title").value = cfg.labTitle || DEFAULT_LAB_CONFIG.labTitle;
+      document.getElementById("cfg-lab-subtitle").value = cfg.labSubtitle || DEFAULT_LAB_CONFIG.labSubtitle;
+      document.getElementById("cfg-printers-list").value = (cfg.printers || DEFAULT_LAB_CONFIG.printers).map(p => p.name).join("\n");
+      document.getElementById("cfg-materials-list").value = (cfg.materials || DEFAULT_LAB_CONFIG.materials).join("\n");
+      document.getElementById("modal-site-editor").classList.remove("hidden");
+    }
+
+    function closeSiteEditorModal() {
+      document.getElementById("modal-site-editor").classList.add("hidden");
+    }
+
+    function saveSiteCustomization() {
+      const labTitle = (document.getElementById("cfg-lab-title").value || "").trim() || DEFAULT_LAB_CONFIG.labTitle;
+      const labSubtitle = (document.getElementById("cfg-lab-subtitle").value || "").trim() || DEFAULT_LAB_CONFIG.labSubtitle;
+      const existingPrinters = (appState.config && appState.config.printers) || DEFAULT_LAB_CONFIG.printers;
+
+      const printerLines = (document.getElementById("cfg-printers-list").value || "")
+        .split(/\r?\n/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      const materialLines = (document.getElementById("cfg-materials-list").value || "")
+        .split(/\r?\n/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      const printers = (printerLines.length > 0 ? printerLines : ["Creality K2", "Elegoo Neptune 4 Max"]).map(name => {
+        const match = existingPrinters.find(p => p.name.toLowerCase() === name.toLowerCase());
+        return { name, desc: match ? match.desc : "AIRC Lab 3D Printer" };
+      });
+
+      appState.config = {
+        labTitle,
+        labSubtitle,
+        printers,
+        materials: materialLines.length > 0 ? materialLines : DEFAULT_LAB_CONFIG.materials
+      };
+
+      saveState();
+      applyDynamicConfigToUi();
+      closeSiteEditorModal();
+      showToast("Site & Dashboard settings updated live!", "success");
+    }
+
+    function downloadFullDatabaseBackup() {
+      const payload = JSON.stringify(appState, null, 2);
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      downloadTextFile(`AIRC_Lab_Backup_${dateStamp}.json`, payload);
+      showToast("Downloaded full lab backup (.JSON)!", "success");
+    }
+
+    function restoreFullDatabaseBackup(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const parsed = JSON.parse(String(e.target.result || ""));
+          if (!parsed || !Array.isArray(parsed.inventory)) {
+            showToast("Invalid backup JSON file.", "error");
+            return;
+          }
+          const base = getDefaultState();
+          appState = Object.assign({}, base, parsed);
+          appState.config = Object.assign({}, base.config, parsed.config || {});
+          saveState();
+          applyDynamicConfigToUi();
+          populateCategoryDropdowns();
+          renderAllAssistantViews();
+          closeSiteEditorModal();
+          showToast("Restored full lab database from backup!", "success");
+        } catch (err) {
+          showToast("Could not parse backup file.", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function copyAiEditContextPrompt() {
+      const cfg = appState.config || DEFAULT_LAB_CONFIG;
+      const promptText = [
+        "Please modify our existing AIRC Lab Control Center (index.html) while preserving all localStorage keys (AIRC_LAB_SYSTEM_V6), Google Apps Script Cloud Sync, UID card check-in/out audit logs, and current data structures:",
+        `- Current Title: ${cfg.labTitle}`,
+        `- Inventory Count: ${appState.inventory.length} items`,
+        `- 3D Printers: ${(cfg.printers || []).map(p => p.name).join(", ")}`,
+        "- Requested Post-Launch Changes:",
+        "  1. [Describe the UI, dashboard tab, form field, or workflow edit you want here]"
+      ].join("\n");
+      copyTextToClipboard(promptText, "Copied post-launch AI modification prompt template!");
+    }
+
+    // =========================================================================
+    // SECTION 6: TEAM ACCESS, SHARE LINKS & CLOUD SYNC MODAL
+    // =========================================================================
+    function getShareLinks() {
+      const baseUrl = window.location.href.split("?")[0];
+      const syncParam = appState.cloudSyncUrl ? `&sync=${encodeURIComponent(appState.cloudSyncUrl)}` : "";
+      const staffSyncParam = appState.cloudSyncUrl ? `?sync=${encodeURIComponent(appState.cloudSyncUrl)}` : "";
+      return {
+        studentUrl: `${baseUrl}?mode=student${syncParam}`,
+        print3dUrl: `${baseUrl}?mode=print3d${syncParam}`,
+        staffUrl: `${baseUrl}${staffSyncParam}`
+      };
+    }
+
+    function openTeamSyncModal() {
+      document.getElementById("staff-pin-input").value = appState.staffPin || "2026";
+      document.getElementById("cloud-sync-url-input").value = appState.cloudSyncUrl || "";
+      document.getElementById("modal-team-sync").classList.remove("hidden");
+    }
+
+    function closeTeamSyncModal() {
+      document.getElementById("modal-team-sync").classList.add("hidden");
+    }
+
+    function copyTextToClipboard(text, successMsg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(successMsg, "success")).catch(() => fallbackCopy(text, successMsg));
+      } else {
+        fallbackCopy(text, successMsg);
+      }
+    }
+
+    function fallbackCopy(text, successMsg) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showToast(successMsg, "success");
+    }
+
+    function copyShareLink(role) {
+      const links = getShareLinks();
+      if (role === "student") {
+        copyTextToClipboard(links.studentUrl, "Copied Locked Student Tool QR Link!");
+      } else if (role === "print3d") {
+        copyTextToClipboard(links.print3dUrl, "Copied Dedicated 3D Printer Request QR Link!");
+      } else {
+        copyTextToClipboard(links.staffUrl, "Copied TA & Professor Invite Link!");
+      }
+    }
+
+    function saveStaffPin() {
+      const newPin = (document.getElementById("staff-pin-input").value || "").trim();
+      if (newPin.length < 3) {
+        showToast("PIN must be at least 3 characters.", "warning");
+        return;
+      }
+      appState.staffPin = newPin;
+      saveState();
+      showToast(`Staff PIN updated to ${newPin}!`, "success");
+    }
+
+    function saveCloudSyncUrl() {
+      const url = (document.getElementById("cloud-sync-url-input").value || "").trim();
+      appState.cloudSyncUrl = url;
+      saveState();
+      updateSyncStatusUi();
+      if (url) {
+        pullFromCloud(false);
+      } else {
+        showToast("Cloud Sync URL cleared (Local Mode active).", "info");
+      }
+    }
+
+    function copyAppsScriptCode() {
+      copyTextToClipboard(GOOGLE_APPS_SCRIPT_TEMPLATE, "Copied Google Apps Script (Code.gs) to clipboard!");
+    }
+
+    // =========================================================================
+    // SECTION 7: STUDENT QR TOOL REQUEST FORM (TYPED DROPDOWN + 3-STATE STATUS)
+    // =========================================================================
+    function openStudentDropdown() {
+      filterStudentDropdown();
+      document.getElementById("student-dropdown-list").classList.remove("hidden");
+    }
+
+    function filterStudentDropdown() {
+      const query = (document.getElementById("student-tool-search").value || "").trim().toLowerCase();
+      const listEl = document.getElementById("student-dropdown-list");
+      const matches = appState.inventory.filter(item =>
+        item.name.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.location.toLowerCase().includes(query)
+      );
+
+      if (matches.length === 0) {
+        listEl.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">No matching tools found in inventory. Ask the lab assistant or professor.</div>`;
+        listEl.classList.remove("hidden");
+        return;
+      }
+
+      listEl.innerHTML = matches.map(item => {
+        const activeLoan = appState.takenLoans.find(l => l.itemId === item.id);
+        let badge = "";
+        if (item.availableQty > 0) {
+          badge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 shrink-0">Available (${item.availableQty})</span>`;
+        } else if (item.availableQty === 0 && activeLoan) {
+          badge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 shrink-0">Taken</span>`;
+        } else {
+          badge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 shrink-0">Ask Professor</span>`;
+        }
+        return `
+          <button type="button" onclick="selectStudentTool('${item.id}')" class="w-full text-left px-4 py-3 hover:bg-indigo-50/70 flex items-center justify-between gap-3 transition">
+            <div>
+              <div class="text-xs sm:text-sm font-bold text-slate-900">${escapeHtml(item.name)}</div>
+              <div class="text-[11px] text-slate-500">${escapeHtml(item.category)} • ${escapeHtml(item.location)}</div>
+            </div>
+            ${badge}
+          </button>
+        `;
+      }).join("");
+      listEl.classList.remove("hidden");
+    }
+
+    function selectStudentTool(itemId) {
+      const item = appState.inventory.find(i => i.id === itemId);
+      if (!item) return;
+      selectedStudentItemId = itemId;
+      document.getElementById("student-tool-search").value = item.name;
+      document.getElementById("student-dropdown-list").classList.add("hidden");
+      document.getElementById("student-receipt-box").classList.add("hidden");
+
+      const statusCard = document.getElementById("student-tool-status-card");
+      const reqForm = document.getElementById("student-borrow-form");
+      const qtyInput = document.getElementById("req-qty");
+      const activeLoans = appState.takenLoans.filter(l => l.itemId === item.id);
+
+      if (item.availableQty > 0) {
+        const partialInfo = activeLoans.length > 0
+          ? `<p class="text-xs text-amber-800 font-semibold">Note: ${activeLoans.length} unit(s) currently taken by ${activeLoans.map(l => `${escapeHtml(l.borrowerName)} (${escapeHtml(l.borrowerUid)})`).join(", ")}.</p>`
+          : "";
+        const profNotice = item.askProfessor
+          ? `<p class="text-xs text-purple-800 font-bold">Policy Note: High-value robotics/research hardware — confirm with the professor before desk UID checkout.</p>`
+          : "";
+        statusCard.innerHTML = `
+          <div class="rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+            <div class="w-full sm:w-40 shrink-0">${getItemPictureHtml(item, "h-28")}</div>
+            <div class="flex-1 space-y-2 text-center sm:text-left">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white">
+                1) Yes, it’s available (${item.availableQty} of ${item.totalQty} in lab)
+              </span>
+              <h4 class="text-base sm:text-lg font-extrabold text-slate-900">${escapeHtml(item.name)}</h4>
+              <div class="bg-white rounded-xl px-3.5 py-2.5 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-950">
+                Location: ${escapeHtml(item.location)}
+              </div>
+              ${profNotice}
+              ${partialInfo}
+              ${item.notes ? `<p class="text-xs text-amber-800 font-medium">Lab Note: ${escapeHtml(item.notes)}</p>` : ""}
+            </div>
+          </div>
+        `;
+        statusCard.classList.remove("hidden");
+        document.getElementById("student-form-heading").textContent = "Step 2 — Submit Request (Then Scan University ID at Desk)";
+        qtyInput.max = item.availableQty;
+        qtyInput.value = 1;
+        reqForm.classList.remove("hidden");
+      } else if (item.availableQty === 0 && activeLoans.length > 0) {
+        const primaryBorrower = escapeHtml(activeLoans[0].borrowerName);
+        const loanDetails = activeLoans.map(l => `${escapeHtml(l.borrowerName)} (${escapeHtml(l.borrowerUid)}, Due: ${escapeHtml(l.returnDate)})`).join(", ");
+        statusCard.innerHTML = `
+          <div class="rounded-2xl border-2 border-amber-500 bg-amber-50/80 p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+            <div class="w-full sm:w-40 shrink-0">${getItemPictureHtml(item, "h-28")}</div>
+            <div class="flex-1 space-y-2 text-center sm:text-left">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-amber-600 text-white">
+                2) Currently taken by ${primaryBorrower}
+              </span>
+              <h4 class="text-base sm:text-lg font-extrabold text-slate-900">${escapeHtml(item.name)}</h4>
+              <p class="text-xs sm:text-sm text-amber-950 font-semibold">Checked out to: ${loanDetails}</p>
+              <p class="text-xs text-slate-600">Home Location: ${escapeHtml(item.location)}</p>
+            </div>
+          </div>
+        `;
+        statusCard.classList.remove("hidden");
+        document.getElementById("student-form-heading").textContent = "Step 2 — Join Waitlist for Next Return";
+        qtyInput.max = 1;
+        qtyInput.value = 1;
+        reqForm.classList.remove("hidden");
+      } else {
+        statusCard.innerHTML = `
+          <div class="rounded-2xl border-2 border-purple-500 bg-purple-50/80 p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+            <div class="w-full sm:w-40 shrink-0">${getItemPictureHtml(item, "h-28")}</div>
+            <div class="flex-1 space-y-2 text-center sm:text-left">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-purple-700 text-white">
+                3) Not there — ask the professor
+              </span>
+              <h4 class="text-base sm:text-lg font-extrabold text-slate-900">${escapeHtml(item.name)}</h4>
+              <p class="text-xs sm:text-sm text-purple-950 font-medium">
+                This item is currently unavailable for self-checkout (${escapeHtml(item.notes || "Faculty / Capstone Restricted")}). Please speak directly with the professor in the lab.
+              </p>
+            </div>
+          </div>
+        `;
+        statusCard.classList.remove("hidden");
+        reqForm.classList.add("hidden");
+      }
+    }
+
+    function clearStudentSelection() {
+      selectedStudentItemId = null;
+      document.getElementById("student-tool-search").value = "";
+      document.getElementById("student-tool-status-card").classList.add("hidden");
+      document.getElementById("student-borrow-form").classList.add("hidden");
+      document.getElementById("student-receipt-box").classList.add("hidden");
+      openStudentDropdown();
+    }
+
+    function resetStudentFlow() {
+      clearStudentSelection();
+      document.getElementById("student-dropdown-list").classList.add("hidden");
+    }
+
+    function submitStudentBorrowRequest(e) {
+      e.preventDefault();
+      const item = appState.inventory.find(i => i.id === selectedStudentItemId);
+      if (!item) return;
+
+      const studentName = document.getElementById("req-student-name").value.trim();
+      const studentEmail = document.getElementById("req-student-email").value.trim();
+      const qty = Math.max(1, parseInt(document.getElementById("req-qty").value, 10) || 1);
+      const returnDate = document.getElementById("req-return-date").value;
+      const purpose = document.getElementById("req-purpose").value.trim();
+      const isWaitlist = item.availableQty === 0;
+
+      const newReq = {
+        reqId: "REQ-" + Math.floor(2050 + Math.random() * 900),
+        itemId: item.id,
+        itemName: item.name,
+        qty,
+        studentName,
+        studentEmail,
+        purpose,
+        returnDate,
+        submittedAt: getCurrentTimestamp(),
+        type: isWaitlist ? "WAITLIST" : "BORROW"
+      };
+
+      appState.requests.unshift(newReq);
+      saveState();
+
+      document.getElementById("student-borrow-form").classList.add("hidden");
+      document.getElementById("receipt-title").textContent = `${newReq.reqId}: ${item.name} (Qty: ${qty})`;
+      document.getElementById("receipt-desc").textContent =
+        `Thank you, ${studentName}. Your request is now visible to the Teaching Assistants & Professor. Please proceed to the lab desk and scan your University ID card on the reader before taking the item from ${item.location}.`;
+      document.getElementById("student-receipt-box").classList.remove("hidden");
+      showToast("Tool request sent to Lab Assistant Dashboard!", "success");
+    }
+
+    // =========================================================================
+    // SECTION 8: LAB ASSISTANT DASHBOARD RENDERERS & INLINE ITEM EDITOR
+    // =========================================================================
+    function renderAllAssistantViews() {
+      updateKpisAndBadges();
+      renderIncomingRequests();
+      renderTakenTools();
+      renderAvailableTools();
+      renderEquipmentChecker();
+      renderPrintOrders();
+    }
+
+    function renderIncomingRequests() {
+      const container = document.getElementById("requests-list-container");
+      if (appState.requests.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">No pending student requests right now.</div>`;
+        return;
+      }
+
+      container.innerHTML = appState.requests.map(req => {
+        const item = appState.inventory.find(i => i.id === req.itemId);
+        const canApprove = item && item.availableQty >= req.qty;
+        return `
+          <div class="rounded-2xl border border-slate-200 p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:border-indigo-200 transition">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${escapeHtml(req.reqId)}</span>
+                <span class="text-sm font-extrabold text-slate-900">${escapeHtml(req.itemName)}</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Qty: ${req.qty}</span>
+                ${canApprove
+                  ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Available (${item.availableQty} in stock)</span>`
+                  : `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Out of Stock / Waitlist</span>`
+                }
+              </div>
+              <div class="text-xs text-slate-700">
+                Requested by: <strong>${escapeHtml(req.studentName)}</strong> (${escapeHtml(req.studentEmail)}) • Return by: <strong>${escapeHtml(req.returnDate)}</strong>
+              </div>
+              <div class="text-xs text-slate-500">Purpose: ${escapeHtml(req.purpose)} • Submitted: ${escapeHtml(req.submittedAt)}</div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <button onclick="declineRequest('${req.reqId}')" class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-xs font-bold text-slate-600 transition">
+                Decline
+              </button>
+              <button
+                onclick="openUidScannerForRequest('${req.reqId}')"
+                ${!canApprove ? "disabled" : ""}
+                class="px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition ${canApprove ? "bg-indigo-600 hover:bg-indigo-700 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed"}"
+              >
+                Approve &amp; Scan Student UID
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function declineRequest(reqId) {
+      appState.requests = appState.requests.filter(r => r.reqId !== reqId);
+      saveState();
+      renderIncomingRequests();
+      updateKpisAndBadges();
+      showToast("Request removed from queue.", "info");
+    }
+
+    function renderTakenTools() {
+      const container = document.getElementById("taken-list-container");
+      const q = (document.getElementById("taken-search-input")?.value || "").trim().toLowerCase();
+      const loans = appState.takenLoans.filter(l =>
+        l.itemName.toLowerCase().includes(q) ||
+        l.borrowerName.toLowerCase().includes(q) ||
+        l.borrowerUid.toLowerCase().includes(q)
+      );
+
+      if (loans.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">No tools are currently checked out.</div>`;
+        return;
+      }
+
+      container.innerHTML = loans.map(loan => `
+        <div class="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">${escapeHtml(loan.loanId)}</span>
+              <span class="text-sm sm:text-base font-extrabold text-slate-900">${escapeHtml(loan.itemName)}</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white border border-amber-200 text-amber-900">Qty: ${loan.qty}</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-950 text-white font-bold">
+                <span>Taken By: ${escapeHtml(loan.borrowerName)}</span>
+                <span class="font-mono text-indigo-300">(${escapeHtml(loan.borrowerUid)})</span>
+              </span>
+              <span class="text-slate-600">Checked Out: <strong>${escapeHtml(loan.checkoutDate)}</strong></span>
+              <span class="text-rose-700 font-bold">Due: ${escapeHtml(loan.returnDate)}</span>
+            </div>
+            <div class="text-xs text-slate-500">Purpose: ${escapeHtml(loan.purpose)}</div>
+          </div>
+
+          <button onclick="openUidScannerForReturn('${loan.loanId}')" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm shrink-0 transition">
+            Return Tool &amp; Scan UID
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function renderAvailableTools() {
+      const container = document.getElementById("available-list-container");
+      const q = (document.getElementById("available-search-input")?.value || "").trim().toLowerCase();
+      const cat = document.getElementById("available-cat-filter")?.value || "ALL";
+
+      const items = appState.inventory.filter(item => {
+        const inStock = item.availableQty > 0;
+        const matchCat = cat === "ALL" || item.category === cat;
+        const matchQuery = item.name.toLowerCase().includes(q) || item.location.toLowerCase().includes(q);
+        return inStock && matchCat && matchQuery;
+      });
+
+      if (items.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">No available items match your filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <div class="rounded-2xl border border-slate-200 p-4 flex flex-col justify-between gap-3 hover:border-emerald-400 transition bg-white">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-mono text-[11px] font-bold text-slate-500">${escapeHtml(item.id)} • ${escapeHtml(item.category)}</span>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800">${item.availableQty} Available</span>
+            </div>
+            <h4 class="text-sm font-extrabold text-slate-900">${escapeHtml(item.name)}</h4>
+            <p class="text-xs text-slate-600">${escapeHtml(item.location)}</p>
+            ${item.notes ? `<p class="text-[11px] text-amber-700 font-semibold">Note: ${escapeHtml(item.notes)}</p>` : ""}
+          </div>
+          <button onclick="openUidScannerForDirectCheckout('${item.id}')" class="w-full py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white text-xs font-bold border border-indigo-200 transition">
+            Desk Checkout (Scan Student UID)
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function renderEquipmentChecker() {
+      const container = document.getElementById("checker-grid-container");
+      const q = (document.getElementById("checker-search-input")?.value || "").trim().toLowerCase();
+      const cat = document.getElementById("checker-cat-filter")?.value || "ALL";
+      const status = document.getElementById("checker-status-filter")?.value || "ALL";
+
+      const filtered = appState.inventory.filter(item => {
+        const activeLoans = appState.takenLoans.filter(l => l.itemId === item.id);
+        const matchQuery = item.name.toLowerCase().includes(q) || item.id.toLowerCase().includes(q) || item.location.toLowerCase().includes(q) || (item.notes || "").toLowerCase().includes(q);
+        const matchCat = cat === "ALL" || item.category === cat;
+        let matchStatus = true;
+        if (status === "AVAILABLE") matchStatus = item.availableQty > 0;
+        if (status === "TAKEN") matchStatus = activeLoans.length > 0;
+        if (status === "PROFESSOR") matchStatus = item.askProfessor;
+        return matchQuery && matchCat && matchStatus;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">No tools match your search criteria.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const activeLoans = appState.takenLoans.filter(l => l.itemId === item.id);
+        let statusBanner = "";
+        if (activeLoans.length > 0) {
+          statusBanner = `
+            <div class="rounded-xl bg-amber-50 border border-amber-200 p-2 text-[11px] text-amber-950 font-semibold">
+              Taken by: ${activeLoans.map(l => `${escapeHtml(l.borrowerName)} (${escapeHtml(l.borrowerUid)})`).join(", ")}
+            </div>
+          `;
+        } else if (item.availableQty > 0) {
+          statusBanner = `
+            <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-2 text-[11px] text-emerald-900 font-semibold">
+              In Lab: ${escapeHtml(item.location)}
+            </div>
+          `;
+        } else {
+          statusBanner = `
+            <div class="rounded-xl bg-purple-50 border border-purple-200 p-2 text-[11px] text-purple-900 font-semibold">
+              Unavailable — Ask Professor (${escapeHtml(item.notes || "Restricted")})
+            </div>
+          `;
+        }
+
+        return `
+          <div class="rounded-2xl border border-slate-200 p-4 flex flex-col justify-between gap-3 bg-white shadow-sm">
+            <div class="space-y-2.5">
+              <div class="relative">
+                ${getItemPictureHtml(item, "h-32")}
+                <div class="absolute bottom-2 right-2 flex items-center gap-1.5">
+                  <button type="button" onclick="openEditItemModal('${item.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/95 hover:bg-indigo-700 text-white text-[10px] font-bold shadow">
+                    Edit
+                  </button>
+                  <label class="px-2.5 py-1 rounded-lg bg-slate-900/85 hover:bg-slate-900 text-white text-[10px] font-bold cursor-pointer shadow">
+                    Upload Photo
+                    <input type="file" accept="image/*" onchange="uploadToolPhoto('${item.id}', event)" class="hidden" />
+                  </label>
+                </div>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-mono text-[11px] font-bold text-slate-500">${escapeHtml(item.id)} • ${escapeHtml(item.category)}</span>
+                <span class="text-xs font-extrabold text-slate-800">${item.availableQty}/${item.totalQty} Usable</span>
+              </div>
+              <h4 class="text-sm font-extrabold text-slate-900 leading-snug">${escapeHtml(item.name)}</h4>
+              ${statusBanner}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openEditItemModal(itemId) {
+      const item = appState.inventory.find(i => i.id === itemId);
+      if (!item) return;
+      document.getElementById("edit-item-id").value = item.id;
+      document.getElementById("edit-item-id-badge").textContent = item.id;
+      document.getElementById("edit-item-name").value = item.name;
+      document.getElementById("edit-item-category").value = item.category;
+      document.getElementById("edit-item-total").value = item.totalQty;
+      document.getElementById("edit-item-avail").value = item.availableQty;
+      document.getElementById("edit-item-location").value = item.location;
+      document.getElementById("edit-item-notes").value = item.notes || "";
+      document.getElementById("edit-item-prof").checked = !!item.askProfessor;
+      document.getElementById("modal-edit-item").classList.remove("hidden");
+    }
+
+    function closeEditItemModal() {
+      document.getElementById("modal-edit-item").classList.add("hidden");
+    }
+
+    function saveEditedItem(e) {
+      e.preventDefault();
+      const id = document.getElementById("edit-item-id").value;
+      const item = appState.inventory.find(i => i.id === id);
+      if (!item) return;
+      item.name = document.getElementById("edit-item-name").value.trim();
+      item.category = document.getElementById("edit-item-category").value.trim() || "Misc Electronics";
+      item.totalQty = Math.max(0, parseInt(document.getElementById("edit-item-total").value, 10) || 0);
+      item.availableQty = Math.max(0, parseInt(document.getElementById("edit-item-avail").value, 10) || 0);
+      item.location = document.getElementById("edit-item-location").value.trim();
+      item.notes = document.getElementById("edit-item-notes").value.trim();
+      item.askProfessor = document.getElementById("edit-item-prof").checked;
+
+      saveState();
+      populateCategoryDropdowns();
+      renderAllAssistantViews();
+      closeEditItemModal();
+      showToast(`Saved updates to ${item.name} (${item.id}).`, "success");
+    }
+
+    function deleteEditedItem() {
+      const id = document.getElementById("edit-item-id").value;
+      const idx = appState.inventory.findIndex(i => i.id === id);
+      if (idx === -1) return;
+      const removed = appState.inventory[idx];
+      appState.inventory.splice(idx, 1);
+      saveState();
+      populateCategoryDropdowns();
+      renderAllAssistantViews();
+      closeEditItemModal();
+      showToast(`Removed ${removed.name} from inventory.`, "info");
+    }
+
+    function uploadToolPhoto(itemId, event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const maxW = 480;
+          const scale = Math.min(1, maxW / img.width);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
+          const item = appState.inventory.find(i => i.id === itemId);
+          if (item) {
+            item.customPhoto = compressedDataUrl;
+            saveState();
+            renderEquipmentChecker();
+            showToast(`Stored custom picture for ${item.name}!`, "success");
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // =========================================================================
+    // SECTION 9: STUDENT UID SCANNER WORKFLOW (APPROVE, CHECKOUT, RETURN)
+    // =========================================================================
+    function openUidScannerForRequest(reqId) {
+      const req = appState.requests.find(r => r.reqId === reqId);
+      if (!req) return;
+      pendingUidAction = { mode: "APPROVE_REQUEST", reqId };
+      document.getElementById("uid-modal-title").textContent = "Approve Checkout — Scan Student UID";
+      document.getElementById("uid-modal-summary").innerHTML = `
+        <div><strong>Tool:</strong> ${escapeHtml(req.itemName)} (Qty: ${req.qty})</div>
+        <div><strong>Student:</strong> ${escapeHtml(req.studentName)} • <strong>Due:</strong> ${escapeHtml(req.returnDate)}</div>
+      `;
+      document.getElementById("uid-walkin-fields").classList.add("hidden");
+      document.getElementById("sim-match-borrower-btn").classList.add("hidden");
+      document.getElementById("uid-confirm-btn").textContent = "Verify UID & Checkout Tool";
+      document.getElementById("uid-scanner-input").value = "";
+      document.getElementById("uid-directory-match-box").textContent = "Tap University ID card on reader or click a student card below.";
+      document.getElementById("modal-uid").classList.remove("hidden");
+      setTimeout(() => document.getElementById("uid-scanner-input").focus(), 50);
+    }
+
+    function openUidScannerForDirectCheckout(itemId) {
+      const item = appState.inventory.find(i => i.id === itemId);
+      if (!item || item.availableQty <= 0) return;
+      pendingUidAction = { mode: "DIRECT_CHECKOUT", itemId };
+      const defaultDue = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      document.getElementById("uid-modal-title").textContent = "Desk Checkout — Scan Student UID";
+      document.getElementById("uid-modal-summary").innerHTML = `
+        <div><strong>Tool:</strong> ${escapeHtml(item.name)} (${escapeHtml(item.id)})</div>
+        <div><strong>Location:</strong> ${escapeHtml(item.location)}</div>
+      `;
+      document.getElementById("quick-student-name").value = "";
+      document.getElementById("quick-return-date").value = defaultDue;
+      document.getElementById("uid-walkin-fields").classList.remove("hidden");
+      document.getElementById("sim-match-borrower-btn").classList.add("hidden");
+      document.getElementById("uid-confirm-btn").textContent = "Verify UID & Checkout Tool";
+      document.getElementById("uid-scanner-input").value = "";
+      document.getElementById("uid-directory-match-box").textContent = "Tap University ID card on reader or click a student card below.";
+      document.getElementById("modal-uid").classList.remove("hidden");
+      setTimeout(() => document.getElementById("uid-scanner-input").focus(), 50);
+    }
+
+    function openUidScannerForReturn(loanId) {
+      const loan = appState.takenLoans.find(l => l.loanId === loanId);
+      if (!loan) return;
+      pendingUidAction = { mode: "RETURN_TOOL", loanId };
+      document.getElementById("uid-modal-title").textContent = "Return Tool — Scan Student UID";
+      document.getElementById("uid-modal-summary").innerHTML = `
+        <div><strong>Returning Tool:</strong> ${escapeHtml(loan.itemName)} (Qty: ${loan.qty})</div>
+        <div><strong>Checked Out To:</strong> ${escapeHtml(loan.borrowerName)} (<span class="font-mono font-bold">${escapeHtml(loan.borrowerUid)}</span>)</div>
+      `;
+      document.getElementById("uid-walkin-fields").classList.add("hidden");
+      const matchBtn = document.getElementById("sim-match-borrower-btn");
+      matchBtn.textContent = `Match ${loan.borrowerName.split(" ")[0]} (${loan.borrowerUid})`;
+      matchBtn.onclick = () => fillSimulatedUid(loan.borrowerUid);
+      matchBtn.classList.remove("hidden");
+      document.getElementById("uid-confirm-btn").textContent = "Verify UID & Return to Stock";
+      document.getElementById("uid-scanner-input").value = "";
+      document.getElementById("uid-directory-match-box").textContent = `Scan ${loan.borrowerName}'s card (${loan.borrowerUid}) to complete return.`;
+      document.getElementById("modal-uid").classList.remove("hidden");
+      setTimeout(() => document.getElementById("uid-scanner-input").focus(), 50);
+    }
+
+    function closeUidModal() {
+      pendingUidAction = null;
+      document.getElementById("modal-uid").classList.add("hidden");
+    }
+
+    function fillSimulatedUid(uid) {
+      const input = document.getElementById("uid-scanner-input");
+      input.value = uid;
+      handleUidLookupPreview();
+      input.focus();
+    }
+
+    function handleUidLookupPreview() {
+      const val = (document.getElementById("uid-scanner-input").value || "").trim().toUpperCase();
+      const box = document.getElementById("uid-directory-match-box");
+      if (!val) {
+        box.textContent = "Waiting for University ID card tap...";
+        return;
+      }
+      const student = STUDENT_DIRECTORY[val];
+      if (student) {
+        box.innerHTML = `<span class="text-emerald-700 font-bold">Card Matched:</span> <strong>${escapeHtml(student.name)}</strong> (${escapeHtml(val)})`;
+        const quickName = document.getElementById("quick-student-name");
+        if (quickName && !quickName.value.trim()) {
+          quickName.value = student.name;
+        }
+      } else {
+        box.innerHTML = `<span class="text-indigo-700 font-bold">Card UID Read:</span> <span class="font-mono font-bold">${escapeHtml(val)}</span>`;
+      }
+    }
+
+    function confirmUidScanAction(e) {
+      e.preventDefault();
+      if (!pendingUidAction) return;
+      const scannedUid = (document.getElementById("uid-scanner-input").value || "").trim().toUpperCase();
+      if (!scannedUid) return;
+
+      const dirMatch = STUDENT_DIRECTORY[scannedUid];
+
+      if (pendingUidAction.mode === "APPROVE_REQUEST") {
+        const reqIndex = appState.requests.findIndex(r => r.reqId === pendingUidAction.reqId);
+        if (reqIndex === -1) return;
+        const req = appState.requests[reqIndex];
+        const item = appState.inventory.find(i => i.id === req.itemId);
+        if (!item || item.availableQty < req.qty) {
+          showToast("Insufficient available quantity in stock.", "error");
+          return;
+        }
+
+        item.availableQty -= req.qty;
+        appState.requests.splice(reqIndex, 1);
+        appState.takenLoans.unshift({
+          loanId: "LN-" + Math.floor(1010 + Math.random() * 890),
+          itemId: item.id,
+          itemName: item.name,
+          qty: req.qty,
+          borrowerName: req.studentName,
+          borrowerUid: scannedUid,
+          borrowerEmail: req.studentEmail,
+          purpose: req.purpose,
+          checkoutDate: new Date().toISOString().slice(0, 10),
+          returnDate: req.returnDate
+        });
+
+        appState.auditLog.unshift({
+          id: "LOG-" + (appState.auditLog.length + 1),
+          timestamp: getCurrentTimestamp(),
+          action: "CHECKOUT",
+          itemName: `${item.name} (${item.id})`,
+          studentName: req.studentName,
+          studentUid: scannedUid,
+          details: `Request ${req.reqId} approved via UID scan • Due ${req.returnDate}`
+        });
+
+        saveState();
+        closeUidModal();
+        renderAllAssistantViews();
+        showToast(`Approved! ${item.name} checked out to ${req.studentName} (${scannedUid}).`, "success");
+      }
+      else if (pendingUidAction.mode === "DIRECT_CHECKOUT") {
+        const item = appState.inventory.find(i => i.id === pendingUidAction.itemId);
+        if (!item || item.availableQty <= 0) return;
+
+        const studentName = (document.getElementById("quick-student-name").value || "").trim() || (dirMatch ? dirMatch.name : "Lab Student");
+        const returnDate = document.getElementById("quick-return-date").value || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+        const purpose = (document.getElementById("quick-purpose").value || "").trim() || "Lab Bench Work";
+
+        item.availableQty -= 1;
+        appState.takenLoans.unshift({
+          loanId: "LN-" + Math.floor(1010 + Math.random() * 890),
+          itemId: item.id,
+          itemName: item.name,
+          qty: 1,
+          borrowerName: studentName,
+          borrowerUid: scannedUid,
+          borrowerEmail: dirMatch ? dirMatch.email : "student@g.rit.edu",
+          purpose,
+          checkoutDate: new Date().toISOString().slice(0, 10),
+          returnDate
+        });
+
+        appState.auditLog.unshift({
+          id: "LOG-" + (appState.auditLog.length + 1),
+          timestamp: getCurrentTimestamp(),
+          action: "CHECKOUT",
+          itemName: `${item.name} (${item.id})`,
+          studentName,
+          studentUid: scannedUid,
+          details: `Desk UID scan checkout • Due ${returnDate}`
+        });
+
+        saveState();
+        closeUidModal();
+        renderAllAssistantViews();
+        showToast(`${item.name} checked out to ${studentName} (${scannedUid}).`, "success");
+      }
+      else if (pendingUidAction.mode === "RETURN_TOOL") {
+        const loanIdx = appState.takenLoans.findIndex(l => l.loanId === pendingUidAction.loanId);
+        if (loanIdx === -1) return;
+        const loan = appState.takenLoans[loanIdx];
+        const item = appState.inventory.find(i => i.id === loan.itemId);
+        if (item) {
+          item.availableQty = Math.min(item.totalQty, item.availableQty + (loan.qty || 1));
+        }
+        appState.takenLoans.splice(loanIdx, 1);
+
+        appState.auditLog.unshift({
+          id: "LOG-" + (appState.auditLog.length + 1),
+          timestamp: getCurrentTimestamp(),
+          action: "RETURN",
+          itemName: `${loan.itemName} (${loan.itemId})`,
+          studentName: loan.borrowerName,
+          studentUid: scannedUid,
+          details: `Returned & UID verified at desk (Borrower UID: ${loan.borrowerUid})`
+        });
+
+        saveState();
+        closeUidModal();
+        renderAllAssistantViews();
+        showToast(`${loan.itemName} returned by ${loan.borrowerName} (${scannedUid}) and restored to Available Tools!`, "success");
+      }
+    }
+
+    // =========================================================================
+    // SECTION 10: 3D PRINT ORDERS, GOOGLE FORM BRIDGE & .TXT FILE GENERATOR
+    // =========================================================================
+    function toggleGoogleFormDrawer() {
+      const drawer = document.getElementById("google-form-drawer");
+      drawer.classList.toggle("hidden");
+      if (!drawer.classList.contains("hidden")) {
+        renderGoogleFormEmbed();
+      }
+    }
+
+    function saveGoogleFormUrl() {
+      const url = (document.getElementById("gform-url-input").value || "").trim();
+      if (!url) return;
+      appState.googleFormUrl = url;
+      saveState();
+      renderGoogleFormEmbed();
+      showToast("Connected Google Form URL updated!", "success");
+    }
+
+    function renderGoogleFormEmbed() {
+      const urlInput = document.getElementById("gform-url-input");
+      const extLink = document.getElementById("gform-external-link");
+      const container = document.getElementById("gform-embed-container");
+      const url = appState.googleFormUrl || "";
+      urlInput.value = url;
+      extLink.href = url || "https://docs.google.com/forms";
+
+      if (url && !url.includes("1FAIpQLSf_AIRC_3D_PRINT_FORM")) {
+        const embedUrl = url.includes("embedded=true") ? url : (url.includes("?") ? `${url}&embedded=true` : `${url}?embedded=true`);
+        container.innerHTML = `<iframe src="${escapeHtml(embedUrl)}" class="w-full h-80 border-0" title="3D Print Google Form"></iframe>`;
+      } else {
+        container.innerHTML = `
+          <div class="max-w-md space-y-2">
+            <div class="text-xs font-extrabold text-indigo-700 uppercase">Google Form Ready to Connect</div>
+            <p class="text-xs text-slate-600">
+              Paste your live lab 3D Print Google Form link on the left and click <strong>Save</strong> to embed the live form here, or use <strong>Simulate Form Webhook</strong> / <strong>Import Rows</strong> to pull submissions into the database.
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    function simulateGoogleFormSync() {
+      const sampleOrder = {
+        orderId: "3DP-" + Math.floor(510 + Math.random() * 480),
+        studentName: "Sabrina Al Bukhari",
+        studentUid: "UID-7049211",
+        printer: "Creality K2",
+        fileName: "rosbot_lidar_riser_v2.zip",
+        fileLink: appState.googleFormUrl,
+        material: "PLA+ White",
+        infill: "30%",
+        estTime: "2h 15m",
+        otherRequests: "Synced from 3D Print Form QR",
+        status: "Queued",
+        submittedAt: getCurrentTimestamp(),
+        source: "Google Form Sync"
+      };
+      appState.printOrders.unshift(sampleOrder);
+      saveState();
+      renderPrintOrders();
+      updateKpisAndBadges();
+      showToast(`Synced new Google Form 3D print order (${sampleOrder.orderId})!`, "success");
+    }
+
+    function importBulkPrintCsv() {
+      const raw = (document.getElementById("bulk-print-csv-input").value || "").trim();
+      if (!raw) {
+        showToast("Paste at least one CSV row first.", "warning");
+        return;
+      }
+      const lines = raw.split(/\r?\n/).filter(l => l.trim());
+      let added = 0;
+      lines.forEach((line, idx) => {
+        const cols = parseCsvLine(line);
+        if (cols.length < 2) return;
+        appState.printOrders.unshift({
+          orderId: "3DP-" + Math.floor(600 + Math.random() * 350 + idx),
+          studentName: cols[0] || "Student",
+          studentUid: cols[1] || "UID-0000000",
+          printer: cols[6] || "Creality K2",
+          fileName: cols[2] || "model_part.zip",
+          fileLink: appState.googleFormUrl,
+          material: cols[3] || "PLA+ Black",
+          infill: cols[4] || "25%",
+          estTime: cols[5] || "2h 00m",
+          otherRequests: cols[7] || "Imported from Google Form Sheet CSV",
+          status: "Queued",
+          submittedAt: getCurrentTimestamp(),
+          source: "Google Sheet CSV"
+        });
+        added++;
+      });
+      document.getElementById("bulk-print-csv-input").value = "";
+      saveState();
+      renderPrintOrders();
+      updateKpisAndBadges();
+      showToast(`Recorded ${added} 3D print order(s) in database!`, "success");
+    }
+
+    function handleZipSelection(event, target) {
+      const input = event.target;
+      const statusEl = document.getElementById(target === "student" ? "student-zip-status" : "assistant-zip-status");
+      if (target === "student") pendingStudentZip = null;
+      else pendingAssistantZip = null;
+
+      if (!input.files || input.files.length === 0) return;
+      if (input.files.length > 1) {
+        input.value = "";
+        statusEl.innerHTML = `<span class="text-rose-600 font-bold">Error: Only 1 .zip file submission is allowed.</span>`;
+        showToast("Only 1 .zip file is allowed per submission.", "error");
+        return;
+      }
+
+      const file = input.files[0];
+      if (!file.name.toLowerCase().endsWith(".zip")) {
+        input.value = "";
+        statusEl.innerHTML = `<span class="text-rose-600 font-bold">Invalid file format: Please upload a .zip file only.</span>`;
+        showToast("Please upload a .zip file only.", "error");
+        return;
+      }
+
+      const sizeKb = Math.max(1, Math.round(file.size / 1024));
+      const zipMeta = { name: file.name, sizeKb, dataUrl: null };
+      statusEl.innerHTML = `<span class="text-emerald-700 font-bold">Attached (.ZIP): ${escapeHtml(file.name)} (${sizeKb} KB)</span>`;
+
+      if (file.size <= 1024 * 1024) {
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          zipMeta.dataUrl = ev.target.result;
+          if (target === "student") pendingStudentZip = zipMeta;
+          else pendingAssistantZip = zipMeta;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        if (target === "student") pendingStudentZip = zipMeta;
+        else pendingAssistantZip = zipMeta;
+      }
+    }
+
+    function checkStudentPrintLockState() {
+      try {
+        const savedLock = localStorage.getItem(PRINT3D_LOCK_KEY);
+        if (savedLock) {
+          const info = JSON.parse(savedLock);
+          document.getElementById("student-print3d-form").classList.add("hidden");
+          document.getElementById("stu-print-receipt-title").textContent = `${info.orderId}: ${info.fileName} (${info.printer})`;
+          document.getElementById("stu-print-receipt-desc").textContent =
+            `Submitted by ${info.studentName} (${info.studentUid}) at ${info.submittedAt}. Your single .ZIP submission has been sent to the AIRC Lab 3D Print Queue.`;
+          document.getElementById("student-print3d-locked-box").classList.remove("hidden");
+        }
+      } catch (err) {
+        console.warn("Could not check print lock state:", err);
+      }
+    }
+
+    function submitStudentPrint3dOrder(e) {
+      e.preventDefault();
+      if (localStorage.getItem(PRINT3D_LOCK_KEY)) {
+        checkStudentPrintLockState();
+        showToast("Only one 3D print submission is allowed per student.", "warning");
+        return;
+      }
+      if (!pendingStudentZip) {
+        showToast("Please attach a valid .zip file before submitting.", "error");
+        return;
+      }
+
+      const studentName = document.getElementById("stu-print-name").value.trim();
+      const studentUid = document.getElementById("stu-print-uid").value.trim().toUpperCase();
+      const alreadyExists = appState.printOrders.some(o => o.studentUid === studentUid && o.status !== "Picked Up");
+      if (alreadyExists) {
+        showToast(`UID ${studentUid} already has an active 3D print submission (1 submission limit).`, "error");
+        return;
+      }
+
+      const printerEl = document.querySelector('input[name="stu-printer-choice"]:checked');
+      const printer = printerEl ? printerEl.value : "Creality K2";
+      const otherRequests = document.getElementById("stu-print-other-requests").value.trim();
+
+      const order = {
+        orderId: "3DP-" + Math.floor(520 + Math.random() * 470),
+        studentName,
+        studentUid,
+        printer,
+        fileName: pendingStudentZip.name,
+        zipDataUrl: pendingStudentZip.dataUrl || null,
+        fileLink: appState.googleFormUrl,
+        material: document.getElementById("stu-print-material").value,
+        infill: document.getElementById("stu-print-infill").value.trim() || "25%",
+        estTime: document.getElementById("stu-print-time").value.trim() || "2h 30m",
+        otherRequests,
+        status: "Queued",
+        submittedAt: getCurrentTimestamp(),
+        source: "Student 3D Print QR Form"
+      };
+
+      appState.printOrders.unshift(order);
+      saveState();
+
+      try {
+        localStorage.setItem(PRINT3D_LOCK_KEY, JSON.stringify({
+          orderId: order.orderId,
+          studentName: order.studentName,
+          studentUid: order.studentUid,
+          printer: order.printer,
+          fileName: order.fileName,
+          submittedAt: order.submittedAt
+        }));
+      } catch (err) {
+        console.warn("Could not persist student lock:", err);
+      }
+
+      pendingStudentZip = null;
+      checkStudentPrintLockState();
+      showToast(`3D Print Order ${order.orderId} submitted for ${printer}!`, "success");
+    }
+
+    function submitNewPrintOrder(e) {
+      e.preventDefault();
+      if (!pendingAssistantZip) {
+        showToast("Please select a valid .zip file (1 file max).", "error");
+        return;
+      }
+      const studentUid = document.getElementById("print-student-uid").value.trim().toUpperCase();
+      const order = {
+        orderId: "3DP-" + Math.floor(520 + Math.random() * 470),
+        studentName: document.getElementById("print-student-name").value.trim(),
+        studentUid,
+        printer: document.getElementById("print-printer-select").value,
+        fileName: pendingAssistantZip.name,
+        zipDataUrl: pendingAssistantZip.dataUrl || null,
+        fileLink: document.getElementById("print-file-link").value.trim() || appState.googleFormUrl,
+        material: document.getElementById("print-material").value,
+        infill: document.getElementById("print-infill").value.trim() || "25%",
+        estTime: document.getElementById("print-est-time").value.trim() || "2h 30m",
+        otherRequests: document.getElementById("print-other-requests").value.trim(),
+        status: "Queued",
+        submittedAt: getCurrentTimestamp(),
+        source: "Lab Control Center"
+      };
+      appState.printOrders.unshift(order);
+      saveState();
+      renderPrintOrders();
+      updateKpisAndBadges();
+      pendingAssistantZip = null;
+      document.getElementById("assistant-zip-status").textContent = "Attach a single .zip archive containing your STL/3MF files.";
+      e.target.reset();
+      showToast(`3D Print Order ${order.orderId} (${order.printer}) saved to database!`, "success");
+    }
+
+    function downloadAttachedZip(orderId) {
+      const o = appState.printOrders.find(x => x.orderId === orderId);
+      if (!o || !o.zipDataUrl) {
+        showToast("No binary .zip payload cached for this sample/large file.", "info");
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = o.zipDataUrl;
+      a.download = o.fileName || `${o.orderId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function updatePrintOrderStatus(orderId, newStatus) {
+      const order = appState.printOrders.find(o => o.orderId === orderId);
+      if (order) {
+        order.status = newStatus;
+        saveState();
+        renderPrintOrders();
+        updateKpisAndBadges();
+        showToast(`Order ${orderId} updated to ${newStatus}.`, "info");
+      }
+    }
+
+    function renderPrintOrders() {
+      const container = document.getElementById("print-orders-list");
+      const filter = document.getElementById("print-status-filter")?.value || "ALL";
+      const orders = appState.printOrders.filter(o => filter === "ALL" || o.status === filter);
+
+      if (orders.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">No 3D print orders in this view.</div>`;
+        return;
+      }
+
+      const badgeColors = {
+        "Queued": "bg-slate-100 text-slate-800 border-slate-300",
+        "Printing": "bg-indigo-100 text-indigo-800 border-indigo-300",
+        "Completed": "bg-emerald-100 text-emerald-800 border-emerald-300",
+        "Picked Up": "bg-slate-200 text-slate-600 border-slate-300"
+      };
+
+      container.innerHTML = orders.map(order => {
+        const printerName = order.printer || "Creality K2";
+        const otherReqText = order.otherRequests !== undefined ? order.otherRequests : (order.notes || "");
+        return `
+        <div class="rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-indigo-200 transition">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded">${escapeHtml(order.orderId)}</span>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-950 text-white">${escapeHtml(printerName)}</span>
+              <span class="font-mono text-xs sm:text-sm font-extrabold text-slate-900">${escapeHtml(order.fileName)}</span>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">${escapeHtml(order.source)}</span>
+            </div>
+            <div class="text-xs text-slate-700">
+              Student: <strong>${escapeHtml(order.studentName)}</strong> (<span class="font-mono font-bold text-indigo-700">${escapeHtml(order.studentUid)}</span>)
+            </div>
+            <div class="text-xs text-slate-500">
+              Material: <strong>${escapeHtml(order.material)}</strong> • Infill: <strong>${escapeHtml(order.infill)}</strong> • Est: <strong>${escapeHtml(order.estTime)}</strong> • ${escapeHtml(order.submittedAt)}
+            </div>
+            ${otherReqText ? `<div class="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 mt-1"><strong>Other Requests:</strong> ${escapeHtml(otherReqText)}</div>` : ""}
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            ${order.zipDataUrl ? `<button onclick="downloadAttachedZip('${order.orderId}')" class="px-2.5 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-bold transition">Download .ZIP</button>` : ""}
+            <select onchange="updatePrintOrderStatus('${order.orderId}', this.value)" class="px-2.5 py-1.5 rounded-xl text-xs font-bold border ${badgeColors[order.status] || badgeColors.Queued}">
+              ${["Queued", "Printing", "Completed", "Picked Up"].map(st =>
+                `<option value="${st}" ${order.status === st ? "selected" : ""}>${st}</option>`
+              ).join("")}
+            </select>
+            <button onclick="downloadSinglePrintOrderTxt('${order.orderId}')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+              Print Details (.TXT)
+            </button>
+          </div>
+        </div>
+      `;
+      }).join("");
+    }
+
+    function downloadTextFile(filename, content) {
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadSinglePrintOrderTxt(orderId) {
+      const o = appState.printOrders.find(x => x.orderId === orderId);
+      if (!o) return;
+      const otherReqText = o.otherRequests !== undefined ? o.otherRequests : (o.notes || "None");
+      const txt = [
+        "====================================================",
+        "AIRC ROBOTICS LAB — 3D PRINT JOB TICKET",
+        "====================================================",
+        `Order ID      : ${o.orderId}`,
+        `Target Printer: ${o.printer || "Creality K2"}`,
+        `Submitted At  : ${o.submittedAt}`,
+        `Source        : ${o.source}`,
+        `Status        : ${o.status}`,
+        "----------------------------------------------------",
+        `Student Name  : ${o.studentName}`,
+        `University UID: ${o.studentUid}`,
+        "----------------------------------------------------",
+        `3D Print .ZIP : ${o.fileName}`,
+        `File URL      : ${o.fileLink || "N/A"}`,
+        `Material      : ${o.material}`,
+        `Infill        : ${o.infill}`,
+        `Est. Time     : ${o.estTime}`,
+        `Other Requests: ${otherReqText || "None"}`,
+        "===================================================="
+      ].join("\n");
+      downloadTextFile(`${o.orderId}_${o.studentUid}_3DPrint.txt`, txt);
+      showToast(`Downloaded ${o.orderId}_${o.studentUid}_3DPrint.txt`, "success");
+    }
+
+    function downloadAllPrintOrdersTxt() {
+      if (appState.printOrders.length === 0) {
+        showToast("No 3D print orders to export.", "warning");
+        return;
+      }
+      const header = [
+        "====================================================",
+        "AIRC ROBOTICS LAB — MASTER 3D PRINT QUEUE LOG",
+        `Exported: ${getCurrentTimestamp()} | Total Orders: ${appState.printOrders.length}`,
+        "====================================================\n"
+      ].join("\n");
+
+      const body = appState.printOrders.map(o => {
+        const otherReqText = o.otherRequests !== undefined ? o.otherRequests : (o.notes || "None");
+        return [
+          `[${o.orderId}] ${o.fileName} — Printer: ${o.printer || "Creality K2"} — Status: ${o.status}`,
+          `  Student       : ${o.studentName} (${o.studentUid})`,
+          `  Specs         : ${o.material} | Infill: ${o.infill} | Est: ${o.estTime}`,
+          `  Source        : ${o.source} (${o.submittedAt})`,
+          `  Other Requests: ${otherReqText || "None"}`,
+          "----------------------------------------------------"
+        ].join("\n");
+      }).join("\n");
+
+      downloadTextFile("AIRC_Lab_3D_Print_Orders.txt", header + body);
+      showToast("Downloaded AIRC_Lab_3D_Print_Orders.txt", "success");
+    }
+
+    // =========================================================================
+    // SECTION 11: SPREADSHEET CSV EXPORT/IMPORT & MODALS
+    // =========================================================================
+    function exportInventoryCsv() {
+      const rows = [["ID", "Name", "Category", "TotalQty", "AvailableQty", "Location", "Notes"]];
+      appState.inventory.forEach(i => {
+        rows.push([i.id, `"${i.name.replace(/"/g, '""')}"`, i.category, i.totalQty, i.availableQty, `"${i.location}"`, `"${i.notes || ""}"`]);
+      });
+      const csv = rows.map(r => r.join(",")).join("\n");
+      downloadTextFile("AIRC_Lab_Inventory_Updated.csv", csv);
+      showToast("Exported updated inventory spreadsheet (.CSV)!", "success");
+    }
+
+    function importInventoryCsv(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const lines = String(e.target.result || "").split(/\r?\n/).slice(1).filter(l => l.trim());
+        let added = 0;
+        lines.forEach((line, idx) => {
+          const cols = parseCsvLine(line);
+          if (cols.length >= 2 && cols[1]) {
+            appState.inventory.push({
+              id: cols[0] || `AIRC-${String(appState.inventory.length + 1 + idx).padStart(3, "0")}`,
+              sno: appState.inventory.length + 1 + idx,
+              name: cols[1],
+              category: cols[2] || "Misc Electronics",
+              totalQty: parseInt(cols[3], 10) || 1,
+              availableQty: parseInt(cols[4], 10) || 1,
+              location: cols[5] || "Main Lab Shelf",
+              notes: cols[6] || "",
+              askProfessor: false
+            });
+            added++;
+          }
+        });
+        saveState();
+        populateCategoryDropdowns();
+        renderAllAssistantViews();
+        showToast(`Imported ${added} items from CSV!`, "success");
+      };
+      reader.readAsText(file);
+    }
+
+    function openQrModal() {
+      const links = getShareLinks();
+      document.getElementById("qr-container-tools").innerHTML = renderQrSvg(links.studentUrl, 160);
+      document.getElementById("qr-container-print").innerHTML = renderQrSvg(links.print3dUrl, 160);
+      document.getElementById("modal-qr").classList.remove("hidden");
+    }
+    function closeQrModal() { document.getElementById("modal-qr").classList.add("hidden"); }
+
+    function openAddItemModal() { document.getElementById("modal-add-item").classList.remove("hidden"); }
+    function closeAddItemModal() { document.getElementById("modal-add-item").classList.add("hidden"); }
+
+    function handleAddNewItem(e) {
+      e.preventDefault();
+      const qty = Math.max(1, parseInt(document.getElementById("new-item-qty").value, 10) || 1);
+      const newItem = {
+        id: `AIRC-${String(appState.inventory.length + 1).padStart(3, "0")}`,
+        sno: appState.inventory.length + 1,
+        name: document.getElementById("new-item-name").value.trim(),
+        category: document.getElementById("new-item-category").value,
+        totalQty: qty,
+        availableQty: qty,
+        location: document.getElementById("new-item-location").value.trim(),
+        notes: document.getElementById("new-item-notes").value.trim(),
+        askProfessor: document.getElementById("new-item-prof").checked
+      };
+      appState.inventory.unshift(newItem);
+      saveState();
+      populateCategoryDropdowns();
+      renderAllAssistantViews();
+      e.target.reset();
+      closeAddItemModal();
+      showToast(`Added ${newItem.name} (${newItem.id}) to lab inventory!`, "success");
+    }
+
+    function openProfessorModal() { document.getElementById("modal-professor").classList.remove("hidden"); }
+    function closeProfessorModal() { document.getElementById("modal-professor").classList.add("hidden"); }
+
+    function openAuditModal() {
+      const list = document.getElementById("audit-log-list");
+      list.innerHTML = appState.auditLog.map(log => `
+        <div class="py-3 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded font-bold text-[10px] ${log.action === "CHECKOUT" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}">${escapeHtml(log.action)}</span>
+            <span class="font-mono text-[11px] text-slate-400">${escapeHtml(log.timestamp)}</span>
+          </div>
+          <div class="font-bold text-slate-900">${escapeHtml(log.itemName)}</div>
+          <div class="text-slate-700">${escapeHtml(log.studentName)} • <span class="font-mono font-bold text-indigo-700">${escapeHtml(log.studentUid)}</span></div>
+          <div class="text-[11px] text-slate-500">${escapeHtml(log.details)}</div>
+        </div>
+      `).join("");
+      document.getElementById("modal-audit").classList.remove("hidden");
+    }
+    function closeAuditModal() { document.getElementById("modal-audit").classList.add("hidden"); }
+
+    // =========================================================================
+    // SECTION 12: INITIALIZATION ON PAGE LOAD
+    // =========================================================================
+    function getAircLogoSvg(heightClass = "h-12 w-auto") {
+      return `
+        <svg viewBox="0 0 320 192" class="${heightClass}" role="img" aria-label="A.I. &amp; Robotics Center — RIT Rochester Institute of Technology of Dubai">
+          <defs>
+            <path id="airc-top-arch-path" d="M 48,116 A 112,106 0 0,1 272,116" fill="none" />
+          </defs>
+          <rect width="320" height="192" rx="8" fill="#ffffff" />
+          <text font-family="Inter, Arial, sans-serif" font-weight="800" font-size="18.2" letter-spacing="1.2" fill="#0f172a">
+            <textPath href="#airc-top-arch-path" startOffset="50%" text-anchor="middle">A.I. &amp; ROBOTICS CENTER</textPath>
+          </text>
+          <path d="M 74,122 A 86,83 0 0,1 246,122" fill="none" stroke="#E06522" stroke-width="6.5" stroke-linecap="butt" />
+          <g stroke="#0f172a" stroke-width="1.4" stroke-linecap="round">
+            <line x1="154" y1="83" x2="151" y2="72" />
+            <line x1="159" y1="82" x2="160" y2="70" />
+            <line x1="164" y1="84" x2="169" y2="74" />
+            <line x1="154" y1="107" x2="151" y2="117" />
+            <line x1="159" y1="108" x2="160" y2="119" />
+            <line x1="164" y1="106" x2="169" y2="116" />
+          </g>
+          <g fill="none" stroke="#0f172a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 90,105 C 102,101 112,92 122,91 L 151,91 C 154,91 154,96 151,96 L 128,97 C 132,99 135,101 133,103 L 126,103 C 131,105 136,108 135,111 C 134,113 128,112 121,109 C 114,113 103,115 90,116" />
+          </g>
+          <g fill="#ffffff" stroke="#0f172a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="207" y="89" width="21" height="27" rx="3" />
+            <path d="M 185,90 L 207,90 L 207,98 L 185,98 Z" />
+            <path d="M 167,90 L 185,90 L 185,98 L 167,98 C 163,98 163,90 167,90 Z" />
+            <path d="M 188,101 L 207,104 L 205,112 L 186,109 Z" />
+            <path d="M 173,105 L 187,102 L 186,110 L 173,112 C 169,112 169,106 173,105 Z" />
+            <circle cx="185" cy="94" r="1.6" fill="#0f172a" />
+            <circle cx="207" cy="94" r="1.6" fill="#0f172a" />
+            <circle cx="187" cy="106" r="1.6" fill="#0f172a" />
+            <circle cx="206" cy="108" r="1.6" fill="#0f172a" />
+          </g>
+          <text x="54" y="174" font-family="Georgia, 'Times New Roman', serif" font-weight="800" font-size="35" letter-spacing="0.5" fill="#E06522">RIT</text>
+          <line x1="133" y1="145" x2="133" y2="180" stroke="#64748b" stroke-width="1.4" />
+          <text x="143" y="160" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="13.2" fill="#0f172a">Rochester Institute</text>
+          <text x="143" y="176" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="13.2" fill="#0f172a">of Technology of Dubai</text>
+        </svg>
+      `;
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("brand-logo-slot").innerHTML = getAircLogoSvg("h-12 sm:h-14 w-auto");
+      const qrLogoSlot = document.getElementById("qr-modal-logo-slot");
+      if (qrLogoSlot) qrLogoSlot.innerHTML = getAircLogoSvg("h-11 w-auto");
+      document.getElementById("qr-btn-icon").innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>`;
+      document.getElementById("student-id-icon").innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4M14 14h4"/></svg>`;
+
+      const defaultReturn = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      const reqDateInput = document.getElementById("req-return-date");
+      if (reqDateInput) reqDateInput.value = defaultReturn;
+
+      const params = new URLSearchParams(window.location.search);
+      const syncParam = params.get("sync");
+      if (syncParam && syncParam !== appState.cloudSyncUrl) {
+        appState.cloudSyncUrl = syncParam;
+        saveState(true);
+      }
+
+      applyDynamicConfigToUi();
+      populateCategoryDropdowns();
+      updateSyncStatusUi();
+      renderAllAssistantViews();
+
+      document.addEventListener("click", (e) => {
+        const searchEl = document.getElementById("student-tool-search");
+        const dropEl = document.getElementById("student-dropdown-list");
+        if (searchEl && dropEl && !searchEl.contains(e.target) && !dropEl.contains(e.target)) {
+          dropEl.classList.add("hidden");
+        }
+      });
+
+      if (params.get("mode") === "student") {
+        switchViewMode("student", true, "tools");
+      } else if (params.get("mode") === "print3d") {
+        switchViewMode("student", true, "print3d");
+      }
+
+      if (appState.cloudSyncUrl) {
+        pullFromCloud(true);
+        setInterval(() => {
+          const activeTag = document.activeElement ? document.activeElement.tagName : "";
+          const modalOpen = !document.getElementById("modal-uid").classList.contains("hidden") ||
+                            !document.getElementById("modal-team-sync").classList.contains("hidden") ||
+                            !document.getElementById("modal-site-editor").classList.contains("hidden") ||
+                            !document.getElementById("modal-edit-item").classList.contains("hidden");
+          if (activeTag !== "INPUT" && activeTag !== "TEXTAREA" && !modalOpen) {
+            pullFromCloud(true);
+          }
+        }, 7000);
+      }
+    });
+  </script>
+</body>
+</html>
