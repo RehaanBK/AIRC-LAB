@@ -34,11 +34,15 @@
           <div class="flex items-center gap-3.5">
             <div id="brand-logo-slot" class="bg-white px-2.5 py-1 rounded-xl shadow-md border border-slate-200 flex items-center justify-center shrink-0" title="A.I. &amp; Robotics Center — RIT Dubai"></div>
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <h1 id="ui-lab-title" class="text-base sm:text-lg font-extrabold tracking-tight text-white">AIRC Lab Control Center</h1>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">v6.3</span>
                 <span id="sync-status-pill" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   LOCAL MODE
                 </span>
+                <a id="header-open-sheet-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-400/40 transition">
+                  Open Google Sheet
+                </a>
               </div>
               <p id="ui-lab-subtitle" class="text-xs text-slate-400">RIT Dubai • Standardized Inventory • UID Card Check-In/Out • 3D Print Queue</p>
             </div>
@@ -280,10 +284,16 @@
             <div>
               <h2 class="text-lg font-extrabold text-slate-900">4. Master Equipment Checker &amp; Visual Catalog</h2>
               <p class="text-xs text-slate-500">
-                Complete database of all lab equipment with stored reference pictures, shelf locations, live borrower UID tags, custom photo upload, and post-launch item editing.
+                Complete database of all lab equipment synced with your Google Sheet, including stored reference pictures, shelf locations, live borrower UID tags, and inline editing.
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+              <button onclick="manualCloudRefresh()" id="btn-checker-sheet-sync" class="hidden px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">
+                Sync Google Sheet
+              </button>
+              <a id="checker-open-sheet-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition">
+                Edit in Google Sheets
+              </a>
               <button onclick="exportInventoryCsv()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-300 transition">
                 Export Spreadsheet (.CSV)
               </button>
@@ -342,32 +352,32 @@
           </div>
 
           <!-- Collapsible Google Form & CSV Importer Drawer -->
-          <div id="google-form-drawer" class="hidden mt-5 pt-5 border-t border-indigo-800/80 grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div class="bg-slate-900/90 rounded-xl p-4 border border-indigo-500/30 space-y-3">
-              <h3 class="text-sm font-bold text-white">Google Form URL &amp; Sheet Sync</h3>
-              <div>
-                <label class="block text-[11px] font-medium text-indigo-200 mb-1">Google Form Link (Embed / QR Target)</label>
-                <div class="flex gap-1.5">
-                  <input type="url" id="gform-url-input" placeholder="https://docs.google.com/forms/d/e/.../viewform" class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-400" />
-                  <button onclick="saveGoogleFormUrl()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white">Save</button>
-                </div>
-              </div>
-              <div class="pt-2 border-t border-slate-800 space-y-2">
-                <label class="block text-[11px] font-medium text-indigo-200">Paste Google Form Response Rows (CSV)</label>
-                <textarea id="bulk-print-csv-input" rows="2" placeholder="Name, UID, File.zip, Material, Infill, Time, Printer, OtherRequests" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-mono text-white focus:outline-none focus:border-indigo-400"></textarea>
-                <div class="flex flex-wrap gap-2">
-                  <button onclick="importBulkPrintCsv()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[11px] font-bold text-white">Import Rows</button>
-                  <button onclick="simulateGoogleFormSync()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-bold text-white">Simulate Form Webhook</button>
-                </div>
-              </div>
+        <!-- Step 3: Free Live Google Sheet & Multi-Device Sync -->
+        <div class="rounded-2xl border border-indigo-200 p-4 space-y-3 bg-white">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 class="text-sm font-extrabold text-slate-900">Live Google Sheet Inventory &amp; Multi-Device Sync</h4>
+              <p class="text-[11px] text-slate-500">
+                Open a blank Google Sheet on a personal <strong>@gmail.com</strong> account (in Incognito if also signed into @rit.edu), click <strong>Extensions → Apps Script</strong>, paste the code, and click <strong>Deploy → New deployment → Web app (Who has access: Anyone)</strong>. Edits made directly in the <strong>Inventory</strong> tab sync to the dashboard automatically.
+              </p>
             </div>
+            <button onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold shrink-0">
+              Copy Google Sheet Script
+            </button>
+          </div>
 
-            <div class="lg:col-span-2 bg-white rounded-xl overflow-hidden border border-indigo-400/40 min-h-[300px] flex flex-col text-slate-800">
-              <div class="bg-slate-100 px-3 py-2 border-b border-slate-200 flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-700" id="gform-iframe-label">Embedded 3D Print Google Form</span>
-                <a id="gform-external-link" href="https://docs.google.com/forms" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-indigo-600 hover:underline">Open in New Tab</a>
-              </div>
-              <div id="gform-embed-container" class="flex-1 flex items-center justify-center p-6 text-center bg-slate-50"></div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="url" id="cloud-sync-url-input" oninput="updateTestSyncAnchor()" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-[11px]" />
+            <button onclick="saveCloudSyncUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0">
+              Connect &amp; Sync
+            </button>
+          </div>
+
+          <div id="cloud-sync-diagnostic" class="hidden rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-[11px] text-slate-600 flex flex-wrap items-center justify-between gap-2">
+            <span id="cloud-sync-diag-text">Status ready.</span>
+            <div class="flex items-center gap-3 shrink-0">
+              <a id="modal-open-sheet-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden font-bold text-emerald-700 hover:underline">Open Google Sheet</a>
+              <a id="cloud-sync-test-link" href="#" target="_blank" rel="noopener noreferrer" class="font-bold text-indigo-600 hover:underline">Test /exec Link</a>
             </div>
           </div>
         </div>
@@ -817,7 +827,7 @@
 
         <!-- Step 3: Free Live Google Apps Script Cloud Sync -->
         <div class="rounded-2xl border border-indigo-200 p-4 space-y-3 bg-white">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <div>
               <h4 class="text-sm font-extrabold text-slate-900">Live Multi-Device Sync (Google Apps Script URL)</h4>
               <p class="text-[11px] text-slate-500">Create a standalone project at <strong>script.google.com</strong> on a personal <strong>@gmail.com</strong> account (<strong>Who has access: Anyone</strong>) so requests sync live across all devices with zero Drive permission errors.</p>
@@ -828,10 +838,15 @@
           </div>
 
           <div class="flex flex-col sm:flex-row gap-2">
-            <input type="url" id="cloud-sync-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-[11px]" />
+            <input type="url" id="cloud-sync-url-input" oninput="updateTestSyncAnchor()" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-[11px]" />
             <button onclick="saveCloudSyncUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0">
               Connect &amp; Sync
             </button>
+          </div>
+
+          <div id="cloud-sync-diagnostic" class="hidden rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-[11px] text-slate-600 flex items-center justify-between gap-2">
+            <span id="cloud-sync-diag-text">Status ready.</span>
+            <a id="cloud-sync-test-link" href="#" target="_blank" rel="noopener noreferrer" class="font-bold text-indigo-600 hover:underline shrink-0">Test /exec Link</a>
           </div>
         </div>
       </div>
@@ -1281,92 +1296,7 @@
         reqId: "REQ-2041",
         itemId: "AIRC-006",
         itemName: "RPi 4 (2018)",
-        qty: 1,
-        studentName: "Sabrina Al Bukhari",
-        studentEmail: "sabrina.b@g.rit.edu",
-        purpose: "ROS2 Edge Compute Node",
-        returnDate: "2026-12-04",
-        submittedAt: "2026-11-25 14:15",
-        type: "BORROW"
-      },
-      {
-        reqId: "REQ-2042",
-        itemId: "AIRC-017",
-        itemName: "arduino uno",
-        qty: 1,
-        studentName: "Gaurav Kewalramani",
-        studentEmail: "gaurav.k@g.rit.edu",
-        purpose: "Emirates Robotics Competition Sensor Rig",
-        returnDate: "2026-12-09",
-        submittedAt: "2026-11-25 16:40",
-        type: "BORROW"
-      }
-    ];
-
-    const INITIAL_PRINT_ORDERS = [
-      {
-        orderId: "3DP-501",
-        studentName: "Gaurav Kewalramani",
-        studentUid: "UID-8831042",
-        printer: "Creality K2",
-        fileName: "lidar_mount_bracket_v3.zip",
-        fileLink: "https://drive.google.com/drive/folders/airc-3d-prints",
-        material: "PETG Black",
-        infill: "35%",
-        estTime: "3h 40m",
-        otherRequests: "Hexapod top LiDAR turret mount — print with tree supports",
-        status: "Printing",
-        submittedAt: "2026-11-25 11:20",
-        source: "3D Print QR Form"
-      },
-      {
-        orderId: "3DP-502",
-        studentName: "Muzaffar Siddiqui",
-        studentUid: "UID-3819204",
-        printer: "Elegoo Neptune 4 Max",
-        fileName: "hexapod_tibia_joint_x2.zip",
-        fileLink: "https://drive.google.com/drive/folders/airc-3d-prints",
-        material: "PLA+ Grey",
-        infill: "50%",
-        estTime: "5h 15m",
-        otherRequests: "Replacement leg links x2 — use brim for bed adhesion",
-        status: "Completed",
-        submittedAt: "2026-11-24 15:05",
-        source: "3D Print QR Form"
-      }
-    ];
-
-    const INITIAL_AUDIT_LOG = [
-      {
-        id: "LOG-01",
-        timestamp: "2026-11-22 10:14",
-        action: "CHECKOUT",
-        itemName: "RPlidar A3 (AIRC-019)",
-        studentName: "Rohan Ashar",
-        studentUid: "UID-4920184",
-        details: "UID Card verified at Lab Desk • Due 2026-12-01"
-      },
-      {
-        id: "LOG-02",
-        timestamp: "2026-11-23 13:20",
-        action: "CHECKOUT",
-        itemName: "intel realsense camera d435 (AIRC-022)",
-        studentName: "Muzaffar Siddiqui",
-        studentUid: "UID-3819204",
-        details: "UID Card verified at Lab Desk • Due 2026-12-03"
-      },
-      {
-        id: "LOG-03",
-        timestamp: "2026-11-24 15:45",
-        action: "CHECKOUT",
-        itemName: "Troseen WX-250 5dof robotic arm (AIRC-005)",
-        studentName: "Yusuf Mirza",
-        studentUid: "UID-5102938",
-        details: "UID Card verified at Lab Desk • Due 2026-12-05"
-      }
-    ];
-
-    // Zero-OAuth-Scope Standalone Cloud Sync Script (immune to Drive/Multi-Account conflicts)
+    // Two-Way Google Sheet Inventory + Multi-Device Cloud Sync Script
     const GOOGLE_APPS_SCRIPT_TEMPLATE = `function doGet(e) {
   var props = PropertiesService.getScriptProperties();
   var count = parseInt(props.getProperty("AIRC_CHUNKS") || "0", 10);
@@ -1374,11 +1304,57 @@
   for (var i = 0; i < count; i++) {
     raw += (props.getProperty("AIRC_DB_" + i) || "");
   }
-  var output = raw ? raw : JSON.stringify({ empty: true });
-  return ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
+  var state = raw ? JSON.parse(raw) : { empty: true };
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) {
+    state.sheetConnected = true;
+    state.sheetUrl = ss.getUrl();
+    state.sheetName = ss.getName();
+    var invSheet = ss.getSheetByName("Inventory");
+    if (invSheet && invSheet.getLastRow() >= 2) {
+      var rows = invSheet.getDataRange().getValues();
+      var photoMap = {};
+      if (Array.isArray(state.inventory)) {
+        for (var p = 0; p < state.inventory.length; p++) {
+          if (state.inventory[p].id && state.inventory[p].customPhoto) {
+            photoMap[String(state.inventory[p].id)] = state.inventory[p].customPhoto;
+          }
+        }
+      }
+      var liveInv = [];
+      for (var r = 1; r < rows.length; r++) {
+        var row = rows[r];
+        var itemName = String(row[1] || "").trim();
+        if (!itemName) continue;
+        var itemId = String(row[0] || "").trim() || ("AIRC-" + ("000" + r).slice(-3));
+        var totalQty = Math.max(0, parseInt(row[3], 10) || 0);
+        var availQty = row[4] === "" || row[4] === null ? totalQty : Math.max(0, parseInt(row[4], 10) || 0);
+        var askProfRaw = String(row[7] || "").trim().toUpperCase();
+        var itemObj = {
+          id: itemId,
+          sno: r,
+          name: itemName,
+          category: String(row[2] || "Misc Electronics").trim(),
+          totalQty: totalQty,
+          availableQty: availQty,
+          location: String(row[5] || "Main Lab Shelf").trim(),
+          notes: String(row[6] || "").trim(),
+          askProfessor: (askProfRaw === "TRUE" || askProfRaw === "YES" || row[7] === true)
+        };
+        if (photoMap[itemId]) itemObj.customPhoto = photoMap[itemId];
+        liveInv.push(itemObj);
+      }
+      if (liveInv.length > 0) {
+        state.inventory = liveInv;
+        state.empty = false;
+      }
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify(state)).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
+  var sheetUrl = "";
   if (e && e.postData && e.postData.contents) {
     var text = e.postData.contents;
     var props = PropertiesService.getScriptProperties();
@@ -1394,8 +1370,47 @@ function doPost(e) {
     for (var j = newCount; j < oldCount; j++) {
       props.deleteProperty("AIRC_DB_" + j);
     }
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (ss) {
+      sheetUrl = ss.getUrl();
+      var data = JSON.parse(text);
+      if (Array.isArray(data.inventory)) {
+        var invSheet = ss.getSheetByName("Inventory") || ss.insertSheet("Inventory");
+        invSheet.clearContents();
+        var invRows = [["ID", "Name", "Category", "TotalQty", "AvailableQty", "Location", "Notes", "AskProfessor"]];
+        for (var k = 0; k < data.inventory.length; k++) {
+          var it = data.inventory[k];
+          invRows.push([it.id, it.name, it.category, it.totalQty, it.availableQty, it.location, it.notes || "", it.askProfessor ? "TRUE" : "FALSE"]);
+        }
+        invSheet.getRange(1, 1, invRows.length, 8).setValues(invRows);
+        invSheet.getRange(1, 1, 1, 8).setFontWeight("bold");
+      }
+      if (Array.isArray(data.takenLoans)) {
+        var loanSheet = ss.getSheetByName("ActiveLoans") || ss.insertSheet("ActiveLoans");
+        loanSheet.clearContents();
+        var loanRows = [["LoanID", "ItemID", "ItemName", "Qty", "BorrowerName", "BorrowerUID", "BorrowerEmail", "Purpose", "CheckoutDate", "ReturnDate"]];
+        for (var m = 0; m < data.takenLoans.length; m++) {
+          var ln = data.takenLoans[m];
+          loanRows.push([ln.loanId, ln.itemId, ln.itemName, ln.qty, ln.borrowerName, ln.borrowerUid, ln.borrowerEmail || "", ln.purpose || "", ln.checkoutDate || "", ln.returnDate || ""]);
+        }
+        loanSheet.getRange(1, 1, loanRows.length, 10).setValues(loanRows);
+        loanSheet.getRange(1, 1, 1, 10).setFontWeight("bold");
+      }
+      if (Array.isArray(data.printOrders)) {
+        var printSheet = ss.getSheetByName("3DPrintOrders") || ss.insertSheet("3DPrintOrders");
+        printSheet.clearContents();
+        var printRows = [["OrderID", "StudentName", "StudentUID", "Printer", "FileName", "Material", "Infill", "EstTime", "OtherRequests", "Status", "SubmittedAt", "Source"]];
+        for (var q = 0; q < data.printOrders.length; q++) {
+          var pr = data.printOrders[q];
+          printRows.push([pr.orderId, pr.studentName, pr.studentUid, pr.printer || "Creality K2", pr.fileName, pr.material, pr.infill, pr.estTime, pr.otherRequests || "", pr.status, pr.submittedAt, pr.source]);
+        }
+        printSheet.getRange(1, 1, printRows.length, 12).setValues(printRows);
+        printSheet.getRange(1, 1, 1, 12).setFontWeight("bold");
+      }
+    }
   }
-  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, sheetUrl: sheetUrl })).setMimeType(ContentService.MimeType.JSON);
 }`;
 
     // =========================================================================
@@ -1403,6 +1418,13 @@ function doPost(e) {
     // =========================================================================
     const STORAGE_KEY = "AIRC_LAB_SYSTEM_V6";
     const PRINT3D_LOCK_KEY = "AIRC_PRINT3D_SUBMITTED_LOCK";
+
+    function normalizeAppsScriptUrl(rawUrl) {
+      let clean = (rawUrl || "").trim();
+      // Remove multi-account /u/0/ or /u/1/ segments that break cross-device access
+      clean = clean.replace(/\/macros\/u\/\d+\/s\//, "/macros/s/");
+      return clean;
+    }
 
     function getDefaultState() {
       return {
@@ -1415,6 +1437,7 @@ function doPost(e) {
         auditLog: JSON.parse(JSON.stringify(INITIAL_AUDIT_LOG)),
         staffPin: "2026",
         cloudSyncUrl: "",
+        connectedSheetUrl: "",
         googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSf_AIRC_3D_PRINT_FORM/viewform",
         lastUpdated: Date.now()
       };
@@ -1428,6 +1451,7 @@ function doPost(e) {
           const base = getDefaultState();
           const merged = Object.assign({}, base, parsed);
           merged.config = Object.assign({}, base.config, parsed.config || {});
+          merged.cloudSyncUrl = normalizeAppsScriptUrl(merged.cloudSyncUrl);
           return merged;
         }
       } catch (err) {
@@ -1460,163 +1484,31 @@ function doPost(e) {
     function updateSyncStatusUi() {
       const pill = document.getElementById("sync-status-pill");
       const manualBtn = document.getElementById("btn-manual-sync");
+      const checkerSyncBtn = document.getElementById("btn-checker-sheet-sync");
+      const sheetLinks = [
+        document.getElementById("header-open-sheet-link"),
+        document.getElementById("checker-open-sheet-link"),
+        document.getElementById("modal-open-sheet-link")
+      ];
       if (!pill) return;
       if (appState.cloudSyncUrl) {
-        pill.textContent = "LIVE CLOUD SYNC";
+        pill.textContent = appState.connectedSheetUrl ? "GOOGLE SHEET SYNCED" : "LIVE CLOUD SYNC";
         pill.className = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/25 text-indigo-200 border border-indigo-400/40";
         if (manualBtn) manualBtn.classList.remove("hidden");
+        if (checkerSyncBtn) checkerSyncBtn.classList.remove("hidden");
       } else {
         pill.textContent = "LOCAL MODE";
         pill.className = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
         if (manualBtn) manualBtn.classList.add("hidden");
+        if (checkerSyncBtn) checkerSyncBtn.classList.add("hidden");
       }
-    }
-
-    function buildCloudSyncPayload() {
-      const clone = JSON.parse(JSON.stringify(appState));
-      if (Array.isArray(clone.printOrders)) {
-        clone.printOrders.forEach(o => {
-          if (o.zipDataUrl && o.zipDataUrl.length > 35000) {
-            delete o.zipDataUrl;
-          }
-        });
-      }
-      return JSON.stringify(clone);
-    }
-
-    async function pushToCloud() {
-      if (!appState.cloudSyncUrl) return;
-      try {
-        await fetch(appState.cloudSyncUrl, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: buildCloudSyncPayload()
-        });
-        updateSyncStatusUi();
-      } catch (err) {
-        console.warn("Cloud push error:", err);
-      }
-    }
-
-    async function pullFromCloud(silent = false) {
-      if (!appState.cloudSyncUrl) return;
-      try {
-        const sep = appState.cloudSyncUrl.includes("?") ? "&" : "?";
-        const requestUrl = `${appState.cloudSyncUrl}${sep}t=${Date.now()}`;
-        const res = await fetch(requestUrl, {
-          method: "GET",
-          redirect: "follow"
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const rawText = await res.text();
-        if (rawText.trim().startsWith("<")) {
-          throw new Error("Received HTML instead of JSON — check Web App deployment.");
-        }
-        const data = JSON.parse(rawText);
-        if (data && !data.empty && Array.isArray(data.inventory) && data.inventory.length > 0) {
-          const localUpdated = appState.lastUpdated || 0;
-          const remoteUpdated = data.lastUpdated || 0;
-          if (remoteUpdated >= localUpdated || !silent) {
-            const base = getDefaultState();
-            appState = Object.assign({}, base, data);
-            appState.config = Object.assign({}, base.config, data.config || {});
-            saveState(true);
-            applyDynamicConfigToUi();
-            populateCategoryDropdowns();
-            renderAllAssistantViews();
-          }
-        } else if (!silent) {
-          await pushToCloud();
-        }
-        updateSyncStatusUi();
-        if (!silent) showToast("Connected & synced with live cloud database!", "success");
-      } catch (err) {
-        console.warn("Cloud pull error:", err);
-        if (!silent) showToast("Could not reach Apps Script URL. Verify 'Who has access' is 'Anyone' and redeploy.", "error");
-      }
-    }
-
-    function manualCloudRefresh() {
-      pullFromCloud(false);
-    }
-
-    // =========================================================================
-    // SECTION 3: UI UTILITIES, HARDWARE ILLUSTRATIONS, QR ENCODER & CSV PARSER
-    // =========================================================================
-    function escapeHtml(str) {
-      if (str === null || str === undefined) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
-
-    function getCurrentTimestamp() {
-      const now = new Date();
-      const pad = n => String(n).padStart(2, "0");
-      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    }
-
-    function showToast(message, type = "info") {
-      const container = document.getElementById("toast-container");
-      if (!container) return;
-      const styles = {
-        success: "bg-emerald-900 text-emerald-50 border-emerald-500",
-        error: "bg-rose-900 text-rose-50 border-rose-500",
-        warning: "bg-amber-900 text-amber-50 border-amber-500",
-        info: "bg-slate-900 text-white border-indigo-500"
-      };
-      const el = document.createElement("div");
-      el.className = `pointer-events-auto rounded-xl border-l-4 px-4 py-3 text-xs font-semibold shadow-xl transition-all duration-300 ${styles[type] || styles.info}`;
-      el.textContent = message;
-      container.appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = "0";
-        setTimeout(() => el.remove(), 300);
-      }, 3800);
-    }
-
-    function applyDynamicConfigToUi() {
-      const cfg = appState.config || DEFAULT_LAB_CONFIG;
-      const titleEl = document.getElementById("ui-lab-title");
-      const subEl = document.getElementById("ui-lab-subtitle");
-      if (titleEl) titleEl.textContent = cfg.labTitle || DEFAULT_LAB_CONFIG.labTitle;
-      if (subEl) subEl.textContent = cfg.labSubtitle || DEFAULT_LAB_CONFIG.labSubtitle;
-
-      const printers = Array.isArray(cfg.printers) && cfg.printers.length > 0 ? cfg.printers : DEFAULT_LAB_CONFIG.printers;
-      const materials = Array.isArray(cfg.materials) && cfg.materials.length > 0 ? cfg.materials : DEFAULT_LAB_CONFIG.materials;
-
-      const printerNamesText = printers.map(p => p.name).join(" & ");
-      const sumEl = document.getElementById("ui-printer-list-summary");
-      const stuSumEl = document.getElementById("ui-stu-printer-names");
-      if (sumEl) sumEl.textContent = printerNamesText;
-      if (stuSumEl) stuSumEl.textContent = printers.map(p => p.name).join(" or ");
-
-      const assistantPrinterSel = document.getElementById("print-printer-select");
-      if (assistantPrinterSel) {
-        assistantPrinterSel.innerHTML = printers.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join("");
-      }
-
-      const stuPrinterGrid = document.getElementById("stu-printer-radio-grid");
-      if (stuPrinterGrid) {
-        stuPrinterGrid.innerHTML = printers.map((p, idx) => `
-          <label class="cursor-pointer">
-            <input type="radio" name="stu-printer-choice" value="${escapeHtml(p.name)}" required ${idx === 0 ? "checked" : ""} class="peer sr-only" />
-            <div class="rounded-xl border-2 border-slate-200 peer-checked:border-purple-600 peer-checked:bg-purple-50/70 p-3.5 transition">
-              <div class="text-sm font-extrabold text-slate-900">${escapeHtml(p.name)}</div>
-              <div class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(p.desc || "AIRC Lab 3D Printer")}</div>
-            </div>
-          </label>
-        `).join("");
-      }
-
-      ["print-material", "stu-print-material"].forEach(selId => {
-        const sel = document.getElementById(selId);
-        if (sel) {
-          sel.innerHTML = materials.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+      sheetLinks.forEach(a => {
+        if (!a) return;
+        if (appState.cloudSyncUrl && appState.connectedSheetUrl) {
+          a.href = appState.connectedSheetUrl;
+          a.classList.remove("hidden");
+        } else {
+          a.classList.add("hidden");
         }
       });
     }
@@ -1788,79 +1680,79 @@ function doPost(e) {
           const r = upward ? n - 1 - step : step;
           for (let dx = 0; dx < 2; dx++) {
             const c = col - dx;
-            if (!reserved[r][c]) {
-              const rawBit = bitIdx < streamBits.length ? streamBits[bitIdx++] : 0;
-              const maskedBit = ((r + c) % 2 === 0) ? (rawBit ^ 1) : rawBit;
-              grid[r][c] = maskedBit;
+    function inventoryFingerprint(list) {
+      if (!Array.isArray(list)) return "";
+      return JSON.stringify(list.map(i => ({
+        id: i.id,
+        name: i.name,
+        category: i.category,
+        totalQty: Number(i.totalQty) || 0,
+        availableQty: Number(i.availableQty) || 0,
+        location: i.location,
+        notes: i.notes || "",
+        askProfessor: !!i.askProfessor
+      })));
+    }
+
+    async function pullFromCloud(silent = false) {
+      if (!appState.cloudSyncUrl) return;
+      try {
+        const sep = appState.cloudSyncUrl.includes("?") ? "&" : "?";
+        const requestUrl = `${appState.cloudSyncUrl}${sep}t=${Date.now()}`;
+        const res = await fetch(requestUrl, {
+          method: "GET",
+          redirect: "follow"
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const rawText = await res.text();
+        if (rawText.trim().startsWith("<")) {
+          throw new Error("Google returned a login/HTML page instead of JSON. Set 'Who has access' to 'Anyone' in Apps Script.");
+        }
+        const data = JSON.parse(rawText);
+        if (data && data.sheetUrl) {
+          appState.connectedSheetUrl = data.sheetUrl;
+        }
+        if (data && !data.empty && Array.isArray(data.inventory) && data.inventory.length > 0) {
+          const localUpdated = appState.lastUpdated || 0;
+          const remoteUpdated = data.lastUpdated || 0;
+          const sheetInventoryChanged = inventoryFingerprint(data.inventory) !== inventoryFingerprint(appState.inventory);
+
+          if (remoteUpdated >= localUpdated || sheetInventoryChanged || !silent) {
+            const base = getDefaultState();
+            const merged = Object.assign({}, base, appState);
+            if (remoteUpdated >= localUpdated || !silent) {
+              Object.assign(merged, data);
+              merged.config = Object.assign({}, base.config, data.config || {});
+            }
+            // Always take live Google Sheet Inventory rows as source of truth
+            merged.inventory = data.inventory;
+            if (data.sheetUrl) merged.connectedSheetUrl = data.sheetUrl;
+            appState = merged;
+            saveState(true);
+            applyDynamicConfigToUi();
+            populateCategoryDropdowns();
+            renderAllAssistantViews();
+            if (sheetInventoryChanged && silent) {
+              showToast("Updated inventory from Google Sheet!", "info");
             }
           }
+        } else if (!silent) {
+          await pushToCloud();
+          setTimeout(() => pullFromCloud(true), 1800);
         }
-        upward = !upward;
-      }
-
-      const fmt = [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0];
-      const fCoords1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
-      const fCoords2 = [[n-1,8],[n-2,8],[n-3,8],[n-4,8],[n-5,8],[n-6,8],[n-7,8],[8,n-8],[8,n-7],[8,n-6],[8,n-5],[8,n-4],[8,n-3],[8,n-2],[8,n-1]];
-      for (let i = 0; i < 15; i++) {
-        grid[fCoords1[i][0]][fCoords1[i][1]] = fmt[i];
-        grid[fCoords2[i][0]][fCoords2[i][1]] = fmt[i];
-      }
-
-      const quiet = 2;
-      const totalMods = n + quiet * 2;
-      const cell = Math.max(3, Math.floor(size / totalMods));
-      const svgSize = cell * totalMods;
-      let rects = `<rect width="${svgSize}" height="${svgSize}" fill="#ffffff"/>`;
-      for (let r = 0; r < n; r++) {
-        for (let c = 0; c < n; c++) {
-          if (grid[r][c] === 1) {
-            rects += `<rect x="${(c + quiet) * cell}" y="${(r + quiet) * cell}" width="${cell}" height="${cell}" fill="#0f172a"/>`;
-          }
-        }
-      }
-      return `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" class="rounded-xl border border-slate-200 shadow-inner mx-auto">${rects}</svg>`;
-    }
-
-    function parseCsvLine(line) {
-      const result = [];
-      let current = "";
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQuotes && line[i + 1] === '"') {
-            current += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (ch === "," && !inQuotes) {
-          result.push(current.trim());
-          current = "";
-        } else {
-          current += ch;
-        }
-      }
-      result.push(current.trim());
-      return result;
-    }
-
-    // =========================================================================
-    // SECTION 4: ROLE SWITCHING, STUDENT QR LOCK MODE & STAFF PIN UNLOCK
-    // =========================================================================
-    function applyRoleLockUi() {
-      const staffHeader = document.getElementById("staff-header-controls");
-      const staffKpi = document.getElementById("staff-kpi-strip");
-      const studentHeaderActions = document.getElementById("student-mode-header-actions");
-
-      if (isStudentLockedMode && !isStaffUnlocked) {
-        staffHeader.classList.add("hidden");
-        staffKpi.classList.add("hidden");
-        studentHeaderActions.classList.remove("hidden");
-      } else {
-        staffHeader.classList.remove("hidden");
-        staffKpi.classList.remove("hidden");
-        studentHeaderActions.classList.add("hidden");
+        updateSyncStatusUi();
+        setSyncDiagnostic(
+          appState.connectedSheetUrl
+            ? "Connected! Editing the 'Inventory' tab in Google Sheets updates this dashboard automatically."
+            : "Connected! Live multi-device sync is active.",
+          appState.cloudSyncUrl
+        );
+        if (!silent) showToast("Connected & synced with Google Sheet!", "success");
+      } catch (err) {
+        console.warn("Cloud pull error:", err);
+        const detail = err && err.message ? err.message : "Network/CORS error";
+        setSyncDiagnostic(`Sync failed (${detail}). Click 'Test /exec Link' to verify it opens without login:`, appState.cloudSyncUrl);
+        if (!silent) showToast("Could not reach Apps Script URL: " + detail, "error");
       }
     }
 
@@ -2102,6 +1994,9 @@ function doPost(e) {
     function openTeamSyncModal() {
       document.getElementById("staff-pin-input").value = appState.staffPin || "2026";
       document.getElementById("cloud-sync-url-input").value = appState.cloudSyncUrl || "";
+      if (appState.cloudSyncUrl) {
+        setSyncDiagnostic("Saved Web App URL loaded:", appState.cloudSyncUrl);
+      }
       document.getElementById("modal-team-sync").classList.remove("hidden");
     }
 
@@ -2150,19 +2045,30 @@ function doPost(e) {
     }
 
     function saveCloudSyncUrl() {
-      const url = (document.getElementById("cloud-sync-url-input").value || "").trim();
+      const raw = document.getElementById("cloud-sync-url-input").value || "";
+      const url = normalizeAppsScriptUrl(raw);
+      document.getElementById("cloud-sync-url-input").value = url;
+
+      if (url && url.includes("/macros/library/")) {
+        setSyncDiagnostic("You pasted the Library URL. Please copy the Web App (/exec) URL instead!", url);
+        showToast("Please copy the Web App URL ending in /exec (not the Library URL).", "error");
+        return;
+      }
+
       appState.cloudSyncUrl = url;
-      saveState();
+      saveState(true);
       updateSyncStatusUi();
       if (url) {
+        setSyncDiagnostic("Testing connection to Web App...", url);
         pullFromCloud(false);
       } else {
+        document.getElementById("cloud-sync-diagnostic").classList.add("hidden");
         showToast("Cloud Sync URL cleared (Local Mode active).", "info");
       }
     }
 
     function copyAppsScriptCode() {
-      copyTextToClipboard(GOOGLE_APPS_SCRIPT_TEMPLATE, "Copied Google Apps Script (Code.gs) to clipboard!");
+      copyTextToClipboard(GOOGLE_APPS_SCRIPT_TEMPLATE, "Copied standalone Google Apps Script (v6.2) to clipboard!");
     }
 
     // =========================================================================
@@ -3399,9 +3305,12 @@ function doPost(e) {
 
       const params = new URLSearchParams(window.location.search);
       const syncParam = params.get("sync");
-      if (syncParam && syncParam !== appState.cloudSyncUrl) {
-        appState.cloudSyncUrl = syncParam;
-        saveState(true);
+      if (syncParam) {
+        const normalized = normalizeAppsScriptUrl(syncParam);
+        if (normalized !== appState.cloudSyncUrl) {
+          appState.cloudSyncUrl = normalized;
+          saveState(true);
+        }
       }
 
       applyDynamicConfigToUi();
