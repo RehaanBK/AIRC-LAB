@@ -36,7 +36,7 @@
             <div>
               <div class="flex flex-wrap items-center gap-2">
                 <h1 id="ui-lab-title" class="text-base sm:text-lg font-extrabold tracking-tight text-white">AIRC Lab Control Center</h1>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">v6.3</span>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">v6.4</span>
                 <span id="sync-status-pill" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   LOCAL MODE
                 </span>
@@ -53,28 +53,28 @@
         <div id="staff-header-controls" class="flex flex-wrap items-center gap-2">
           <!-- View Switcher Pill -->
           <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex items-center">
-            <button id="btn-mode-assistant" onclick="switchViewMode('assistant')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow">
+            <button type="button" id="btn-mode-assistant" onclick="switchViewMode('assistant')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow">
               <span>Lab Assistant Dashboard</span>
             </button>
-            <button id="btn-mode-student" onclick="switchViewMode('student')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white">
+            <button type="button" id="btn-mode-student" onclick="switchViewMode('student')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white">
               <span>Student QR Forms</span>
             </button>
           </div>
 
-          <button onclick="openSiteEditorModal()" class="px-3 py-2 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+          <button type="button" onclick="openSiteEditorModal()" class="px-3 py-2 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
             <span>Customize Site &amp; Backup</span>
           </button>
 
-          <button onclick="openTeamSyncModal()" class="px-3 py-2 rounded-xl bg-indigo-900/80 hover:bg-indigo-800 text-indigo-100 border border-indigo-600/50 text-xs font-semibold transition flex items-center gap-1.5">
+          <button type="button" onclick="openTeamSyncModal()" class="px-3 py-2 rounded-xl bg-indigo-900/80 hover:bg-indigo-800 text-indigo-100 border border-indigo-600/50 text-xs font-semibold transition flex items-center gap-1.5">
             <span>Share &amp; Team Access</span>
           </button>
 
-          <button onclick="openQrModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+          <button type="button" onclick="openQrModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
             <span id="qr-btn-icon"></span>
             <span>Lab QR Codes</span>
           </button>
 
-          <button onclick="openAddItemModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+          <button type="button" onclick="openAddItemModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
             <span>+ Add Inventory</span>
           </button>
         </div>
@@ -82,7 +82,7 @@
         <!-- Student Mode Right-Side Staff Unlock Button -->
         <div id="student-mode-header-actions" class="hidden flex items-center gap-2">
           <span id="student-portal-badge" class="text-xs text-indigo-300 font-medium">Student Equipment Portal</span>
-          <button onclick="promptStaffUnlock()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition">
+          <button type="button" onclick="promptStaffUnlock()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition">
             TA / Professor Login
           </button>
         </div>
@@ -114,10 +114,10 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <button onclick="openAuditModal()" class="px-2.5 py-1 rounded-full bg-indigo-950/80 hover:bg-indigo-900 text-indigo-200 border border-indigo-800/70 font-medium transition">
+          <button type="button" onclick="openAuditModal()" class="px-2.5 py-1 rounded-full bg-indigo-950/80 hover:bg-indigo-900 text-indigo-200 border border-indigo-800/70 font-medium transition">
             UID Scan Audit Log
           </button>
-          <button onclick="openProfessorModal()" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-medium transition">
+          <button type="button" onclick="openProfessorModal()" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-medium transition">
             Professor Alignment Notes
           </button>
         </div>
@@ -145,17 +145,17 @@
         <div class="flex items-start gap-3">
           <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center font-bold shrink-0 mt-0.5">!</div>
           <div>
-            <h2 class="text-sm font-bold text-amber-950">Post-Launch Ready: Modular Site Architecture &amp; Professor Alignment</h2>
+            <h2 class="text-sm font-bold text-amber-950">Two-Way Google Sheet Inventory &amp; Modular Site Architecture</h2>
             <p class="text-xs text-amber-900 mt-0.5 leading-relaxed">
-              You can edit printers, materials, labels, and inventory items live anytime via <strong>Customize Site &amp; Backup</strong>—or send a follow-up prompt after launch to add new features while keeping your live database intact.
+              Connect your Google Sheet via <strong>Share &amp; Team Access</strong> to edit inventory rows directly in Sheets without updating the dashboard—or customize printers, materials, and labels anytime in <strong>Customize Site &amp; Backup</strong>.
             </p>
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button onclick="openSiteEditorModal()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-sm">
+          <button type="button" onclick="openSiteEditorModal()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-sm">
             Edit Site Settings
           </button>
-          <button onclick="openProfessorModal()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-sm">
+          <button type="button" onclick="openProfessorModal()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-sm">
             Meeting Checklist
           </button>
         </div>
@@ -163,7 +163,7 @@
 
       <!-- 5 Primary Dashboard Feature Buttons -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <button id="tab-btn-requests" onclick="switchAssistantTab('requests')" class="tab-card text-left p-4 rounded-2xl border-2 border-indigo-600 bg-white shadow-sm transition">
+        <button type="button" id="tab-btn-requests" onclick="switchAssistantTab('requests')" class="tab-card text-left p-4 rounded-2xl border-2 border-indigo-600 bg-white shadow-sm transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Feature 1</span>
             <span id="badge-tab-requests" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-rose-100 text-rose-700">0</span>
@@ -172,7 +172,7 @@
           <div class="text-xs text-slate-500 mt-0.5">Approve &amp; scan student UID</div>
         </button>
 
-        <button id="tab-btn-taken" onclick="switchAssistantTab('taken')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+        <button type="button" id="tab-btn-taken" onclick="switchAssistantTab('taken')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Feature 2</span>
             <span id="badge-tab-taken" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">0</span>
@@ -181,7 +181,7 @@
           <div class="text-xs text-slate-500 mt-0.5">Active loans, Name + UID &amp; return</div>
         </button>
 
-        <button id="tab-btn-available" onclick="switchAssistantTab('available')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+        <button type="button" id="tab-btn-available" onclick="switchAssistantTab('available')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Feature 3</span>
             <span id="badge-tab-available" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">0</span>
@@ -190,16 +190,16 @@
           <div class="text-xs text-slate-500 mt-0.5">In-stock shelf items &amp; desk checkout</div>
         </button>
 
-        <button id="tab-btn-checker" onclick="switchAssistantTab('checker')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+        <button type="button" id="tab-btn-checker" onclick="switchAssistantTab('checker')" class="tab-card text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-sky-600">Feature 4</span>
             <span id="badge-tab-checker" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-sky-100 text-sky-800">72</span>
           </div>
           <div class="mt-2 text-sm sm:text-base font-extrabold text-slate-900">Equipment Checker</div>
-          <div class="text-xs text-slate-500 mt-0.5">All tools + stored pictures &amp; edit</div>
+          <div class="text-xs text-slate-500 mt-0.5">All tools + Google Sheet &amp; edit</div>
         </button>
 
-        <button id="tab-btn-prints" onclick="switchAssistantTab('prints')" class="tab-card col-span-2 sm:col-span-1 text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
+        <button type="button" id="tab-btn-prints" onclick="switchAssistantTab('prints')" class="tab-card col-span-2 sm:col-span-1 text-left p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-purple-600">Feature 5</span>
             <span id="badge-tab-prints" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-purple-100 text-purple-800">0</span>
@@ -222,10 +222,10 @@
               </p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-              <button onclick="manualCloudRefresh()" id="btn-manual-sync" class="hidden px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition">
+              <button type="button" onclick="manualCloudRefresh()" id="btn-manual-sync" class="hidden px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition">
                 Refresh Live Sync
               </button>
-              <button onclick="switchViewMode('student', false, 'tools')" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 transition">
+              <button type="button" onclick="switchViewMode('student', false, 'tools')" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 transition">
                 + Preview Student QR Form
               </button>
             </div>
@@ -288,13 +288,13 @@
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <button onclick="manualCloudRefresh()" id="btn-checker-sheet-sync" class="hidden px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">
+              <button type="button" onclick="manualCloudRefresh()" id="btn-checker-sheet-sync" class="hidden px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">
                 Sync Google Sheet
               </button>
               <a id="checker-open-sheet-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition">
                 Edit in Google Sheets
               </a>
-              <button onclick="exportInventoryCsv()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-300 transition">
+              <button type="button" onclick="exportInventoryCsv()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-300 transition">
                 Export Spreadsheet (.CSV)
               </button>
               <label class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 cursor-pointer transition">
@@ -339,45 +339,52 @@
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
-              <button onclick="openQrModal()" class="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold border border-purple-400/40 shadow-sm transition">
+              <button type="button" onclick="openQrModal()" class="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold border border-purple-400/40 shadow-sm transition">
                 3D Print Form QR Code
               </button>
-              <button onclick="toggleGoogleFormDrawer()" class="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold border border-indigo-400/40 shadow-sm transition">
+              <button type="button" onclick="toggleGoogleFormDrawer()" class="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold border border-indigo-400/40 shadow-sm transition">
                 Open Connected Google Form
               </button>
-              <button onclick="downloadAllPrintOrdersTxt()" class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition">
+              <button type="button" onclick="downloadAllPrintOrdersTxt()" class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition">
                 Print All Orders (.TXT)
               </button>
             </div>
           </div>
 
           <!-- Collapsible Google Form & CSV Importer Drawer -->
-        <!-- Step 3: Free Live Google Sheet & Multi-Device Sync -->
-        <div class="rounded-2xl border border-indigo-200 p-4 space-y-3 bg-white">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h4 class="text-sm font-extrabold text-slate-900">Live Google Sheet Inventory &amp; Multi-Device Sync</h4>
-              <p class="text-[11px] text-slate-500">
-                Open a blank Google Sheet on a personal <strong>@gmail.com</strong> account (in Incognito if also signed into @rit.edu), click <strong>Extensions → Apps Script</strong>, paste the code, and click <strong>Deploy → New deployment → Web app (Who has access: Anyone)</strong>. Edits made directly in the <strong>Inventory</strong> tab sync to the dashboard automatically.
-              </p>
+          <div id="google-form-drawer" class="hidden mt-4 pt-4 border-t border-indigo-800/80 grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-indigo-900/50 rounded-xl p-4 border border-indigo-700/60 space-y-3">
+              <div class="text-xs font-bold uppercase tracking-wider text-indigo-300">Google Form Connection</div>
+              <div>
+                <label class="block text-[11px] text-indigo-200 mb-1">Google Form URL (Embed or Direct Link)</label>
+                <div class="flex gap-1.5">
+                  <input type="url" id="gform-url-input" placeholder="https://docs.google.com/forms/d/e/.../viewform" class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-indigo-600 text-xs text-white focus:outline-none" />
+                  <button type="button" onclick="saveGoogleFormUrl()" class="px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold">Save</button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <a id="gform-external-link" href="https://docs.google.com/forms" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-white text-indigo-950 text-xs font-bold hover:bg-indigo-50">
+                  Launch Google Form ↗
+                </a>
+                <button type="button" onclick="simulateGoogleFormSync()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">
+                  Simulate Form Webhook
+                </button>
+              </div>
+              <div class="pt-2 border-t border-indigo-800/70">
+                <label class="block text-[11px] text-indigo-200 mb-1">Quick Import from Google Form Responses CSV</label>
+                <textarea id="bulk-print-csv-input" rows="2" placeholder="Paste CSV rows: Student Name, UID, FileName.zip, Material, Infill, EstTime, Printer, OtherRequests" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-indigo-700 text-[11px] text-white font-mono"></textarea>
+                <button type="button" onclick="importBulkPrintCsv()" class="mt-1.5 w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold">
+                  Import Rows into Print Database
+                </button>
+              </div>
             </div>
-            <button onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold shrink-0">
-              Copy Google Sheet Script
-            </button>
-          </div>
 
-          <div class="flex flex-col sm:flex-row gap-2">
-            <input type="url" id="cloud-sync-url-input" oninput="updateTestSyncAnchor()" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-[11px]" />
-            <button onclick="saveCloudSyncUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0">
-              Connect &amp; Sync
-            </button>
-          </div>
-
-          <div id="cloud-sync-diagnostic" class="hidden rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-[11px] text-slate-600 flex flex-wrap items-center justify-between gap-2">
-            <span id="cloud-sync-diag-text">Status ready.</span>
-            <div class="flex items-center gap-3 shrink-0">
-              <a id="modal-open-sheet-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden font-bold text-emerald-700 hover:underline">Open Google Sheet</a>
-              <a id="cloud-sync-test-link" href="#" target="_blank" rel="noopener noreferrer" class="font-bold text-indigo-600 hover:underline">Test /exec Link</a>
+            <div class="lg:col-span-2 bg-white text-slate-900 rounded-xl overflow-hidden border border-indigo-700 flex flex-col">
+              <div class="px-3.5 py-2 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-700">Embedded Google Form Preview</span>
+                <span class="text-[11px] text-slate-500">All submissions auto-log into the queue below</span>
+              </div>
+              <div id="gform-embed-container" class="flex-1 min-h-[240px] flex items-center justify-center p-4 text-center bg-slate-50"></div>
             </div>
           </div>
         </div>
@@ -681,7 +688,7 @@
           <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">University ID Reader</span>
           <h3 id="uid-modal-title" class="text-base font-extrabold">Scan Student UID Card</h3>
         </div>
-        <button onclick="closeUidModal()" class="text-slate-300 hover:text-white text-sm font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeUidModal()" class="text-slate-300 hover:text-white text-sm font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
 
       <div class="p-5 space-y-4">
@@ -756,16 +763,16 @@
   </div>
 
   <!-- =====================================================================
-       MODAL 2: SHARE LINKS, MULTIPLE TA/PROFESSOR ACCESS & CLOUD SYNC
+       MODAL 2: SHARE LINKS, MULTIPLE TA/PROFESSOR ACCESS & GOOGLE SHEET SYNC
   ====================================================================== -->
   <div id="modal-team-sync" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
       <div class="bg-indigo-950 text-white px-5 py-4 flex items-center justify-between">
         <div>
-          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">Multi-User Deployment &amp; Access</span>
-          <h3 class="text-base font-extrabold">Share Student Links &amp; Invite TAs / Professors</h3>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">Multi-User Deployment &amp; Two-Way Google Sheet</span>
+          <h3 class="text-base font-extrabold">Share Student Links, Invite Staff &amp; Connect Google Sheet</h3>
         </div>
-        <button onclick="closeTeamSyncModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeTeamSyncModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
 
       <div class="p-5 overflow-y-auto space-y-5 text-xs text-slate-700">
@@ -779,7 +786,7 @@
                 Opens the locked <strong>Student Tool Request Form</strong> with TA dashboard locked behind PIN.
               </p>
             </div>
-            <button onclick="copyShareLink('student')" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition">
+            <button type="button" onclick="copyShareLink('student')" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition">
               Copy Tool QR Link
             </button>
           </div>
@@ -792,7 +799,7 @@
                 Opens directly to the <strong>3D Printer Request Form</strong> (Creality K2 / Neptune 4 Max + .ZIP upload).
               </p>
             </div>
-            <button onclick="copyShareLink('print3d')" class="w-full py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition">
+            <button type="button" onclick="copyShareLink('print3d')" class="w-full py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition">
               Copy 3D Print QR Link
             </button>
           </div>
@@ -805,7 +812,7 @@
                 Opens the full <strong>Lab Control Center</strong> connected to your live shared database.
               </p>
             </div>
-            <button onclick="copyShareLink('staff')" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition">
+            <button type="button" onclick="copyShareLink('staff')" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition">
               Copy Staff Invite Link
             </button>
           </div>
@@ -820,33 +827,38 @@
             </div>
             <div class="flex items-center gap-2">
               <input type="text" id="staff-pin-input" maxlength="10" class="w-28 text-center font-mono font-bold px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-900" />
-              <button onclick="saveStaffPin()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold">Update PIN</button>
+              <button type="button" onclick="saveStaffPin()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold">Update PIN</button>
             </div>
           </div>
         </div>
 
-        <!-- Step 3: Free Live Google Apps Script Cloud Sync -->
+        <!-- Step 3: Free Live Google Sheet Inventory & Multi-Device Sync -->
         <div class="rounded-2xl border border-indigo-200 p-4 space-y-3 bg-white">
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h4 class="text-sm font-extrabold text-slate-900">Live Multi-Device Sync (Google Apps Script URL)</h4>
-              <p class="text-[11px] text-slate-500">Create a standalone project at <strong>script.google.com</strong> on a personal <strong>@gmail.com</strong> account (<strong>Who has access: Anyone</strong>) so requests sync live across all devices with zero Drive permission errors.</p>
+              <h4 class="text-sm font-extrabold text-slate-900">Live Google Sheet Inventory &amp; Multi-Device Sync</h4>
+              <p class="text-[11px] text-slate-500">
+                Open a blank Google Sheet on a personal <strong>@gmail.com</strong> account (in Incognito if also signed into @rit.edu), click <strong>Extensions → Apps Script</strong>, paste the code, and click <strong>Deploy → New deployment → Web app (Who has access: Anyone)</strong>. Edits made directly in the <strong>Inventory</strong> tab sync to the dashboard automatically.
+              </p>
             </div>
-            <button onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold shrink-0">
-              Copy Google Script Code
+            <button type="button" onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold shrink-0">
+              Copy Google Sheet Script
             </button>
           </div>
 
           <div class="flex flex-col sm:flex-row gap-2">
             <input type="url" id="cloud-sync-url-input" oninput="updateTestSyncAnchor()" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-[11px]" />
-            <button onclick="saveCloudSyncUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0">
+            <button type="button" onclick="saveCloudSyncUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0">
               Connect &amp; Sync
             </button>
           </div>
 
-          <div id="cloud-sync-diagnostic" class="hidden rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-[11px] text-slate-600 flex items-center justify-between gap-2">
+          <div id="cloud-sync-diagnostic" class="hidden rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-[11px] text-slate-600 flex flex-wrap items-center justify-between gap-2">
             <span id="cloud-sync-diag-text">Status ready.</span>
-            <a id="cloud-sync-test-link" href="#" target="_blank" rel="noopener noreferrer" class="font-bold text-indigo-600 hover:underline shrink-0">Test /exec Link</a>
+            <div class="flex items-center gap-3 shrink-0">
+              <a id="modal-open-sheet-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden font-bold text-emerald-700 hover:underline">Open Google Sheet</a>
+              <a id="cloud-sync-test-link" href="#" target="_blank" rel="noopener noreferrer" class="font-bold text-indigo-600 hover:underline">Test /exec Link</a>
+            </div>
           </div>
         </div>
       </div>
@@ -863,7 +875,7 @@
           <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">Post-Launch Control &amp; Extensibility</span>
           <h3 class="text-base font-extrabold">Customize Site &amp; Dashboard Settings</h3>
         </div>
-        <button onclick="closeSiteEditorModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeSiteEditorModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
 
       <div class="p-5 overflow-y-auto space-y-5 text-xs text-slate-700">
@@ -907,7 +919,7 @@
         <div class="rounded-2xl border border-emerald-200 p-4 space-y-3 bg-emerald-50/40">
           <h4 class="text-sm font-extrabold text-slate-900">3. Safe Post-Launch Updates &amp; AI Prompt Helper</h4>
           <p class="text-[11px] text-slate-600 leading-relaxed">
-            When you ask me to modify or add new features to this site after launch, your live inventory, UID checkouts, and 3D print orders remain safely stored in your browser &amp; connected Cloud Sync. Always download a JSON backup before deploying new code:
+            When you ask me to modify or add new features to this site after launch, your live inventory, UID checkouts, and 3D print orders remain safely stored in your browser &amp; connected Google Sheet. Always download a JSON backup before deploying new code:
           </p>
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="downloadFullDatabaseBackup()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition">
@@ -936,7 +948,7 @@
           <span id="edit-item-id-badge" class="text-[10px] font-mono font-bold text-indigo-300"></span>
           <h3 class="text-base font-extrabold">Edit Equipment Details</h3>
         </div>
-        <button onclick="closeEditItemModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeEditItemModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
       <form onsubmit="saveEditedItem(event)" class="p-5 space-y-3">
         <input type="hidden" id="edit-item-id" />
@@ -993,7 +1005,7 @@
           <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Authorized Personnel Only</span>
           <h3 class="text-base font-extrabold">Enter TA / Professor PIN</h3>
         </div>
-        <button onclick="closeStaffPinModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeStaffPinModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
       <form onsubmit="verifyStaffPinSubmit(event)" class="p-5 space-y-4">
         <p class="text-xs text-slate-600">Enter the lab staff PIN to open the Teaching Assistant &amp; Professor Control Center (Default PIN: <strong class="font-mono">2026</strong>).</p>
@@ -1019,7 +1031,7 @@
             <p class="text-xs text-slate-400">Print and post at the lab entrance and 3D printer station</p>
           </div>
         </div>
-        <button onclick="closeQrModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeQrModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
       <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div class="border-2 border-indigo-200 rounded-2xl p-4 text-center space-y-3 bg-indigo-50/30">
@@ -1039,7 +1051,7 @@
         </div>
       </div>
       <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Print QR Posters</button>
+        <button type="button" onclick="window.print()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Print QR Posters</button>
       </div>
     </div>
   </div>
@@ -1051,7 +1063,7 @@
     <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
       <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
         <h3 class="text-base font-extrabold">Add New Tool / Component</h3>
-        <button onclick="closeAddItemModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeAddItemModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
       <form onsubmit="handleAddNewItem(event)" class="p-5 space-y-3">
         <div>
@@ -1109,7 +1121,7 @@
           <span class="text-[11px] font-bold uppercase tracking-wider text-amber-100">Governance &amp; Policy</span>
           <h3 class="text-base font-extrabold">Professor Alignment Meeting Agenda</h3>
         </div>
-        <button onclick="closeProfessorModal()" class="text-white/90 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeProfessorModal()" class="text-white/90 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
       <div class="p-5 space-y-3 text-xs text-slate-700 leading-relaxed">
         <p class="font-medium text-slate-800">
@@ -1124,7 +1136,7 @@
           <li><strong>University IT / RFID Reader Format:</strong> Confirm whether the campus ID card reader outputs decimal student ID numbers or hex badge UIDs.</li>
         </ul>
         <div class="pt-2 flex justify-end">
-          <button onclick="closeProfessorModal()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">Got It</button>
+          <button type="button" onclick="closeProfessorModal()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">Got It</button>
         </div>
       </div>
     </div>
@@ -1140,18 +1152,18 @@
           <h3 class="text-base font-extrabold">University ID (UID) Check-In / Check-Out Log</h3>
           <p class="text-xs text-slate-400">Permanent timestamped record of every card scan at the lab desk</p>
         </div>
-        <button onclick="closeAuditModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
+        <button type="button" onclick="closeAuditModal()" class="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10">Close</button>
       </div>
       <div id="audit-log-list" class="p-5 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
     </div>
   </div>
 
   <!-- =====================================================================
-       APPLICATION JAVASCRIPT — MODULAR POST-LAUNCH EDITABLE ARCHITECTURE
+       APPLICATION JAVASCRIPT — COMPLETE, SELF-CONTAINED & RUNNABLE
   ====================================================================== -->
   <script>
     // =========================================================================
-    // SECTION 1: LAB_CONFIG & DEFAULT SEED DATA (EDITABLE POST-LAUNCH)
+    // SECTION 1: LAB_CONFIG & DEFAULT SEED DATA
     // =========================================================================
     const DEFAULT_LAB_CONFIG = {
       labTitle: "AIRC Lab Control Center",
@@ -1296,6 +1308,91 @@
         reqId: "REQ-2041",
         itemId: "AIRC-006",
         itemName: "RPi 4 (2018)",
+        qty: 1,
+        studentName: "Sabrina Al Bukhari",
+        studentEmail: "sabrina.b@g.rit.edu",
+        purpose: "ROS2 Edge Vision Controller",
+        returnDate: "2026-12-04",
+        submittedAt: "2026-11-26 09:42",
+        type: "BORROW"
+      },
+      {
+        reqId: "REQ-2042",
+        itemId: "AIRC-018",
+        itemName: "RPlidar A1",
+        qty: 1,
+        studentName: "Gaurav Kewalramani",
+        studentEmail: "gaurav.k@g.rit.edu",
+        purpose: "2D Indoor Mapping & Localization",
+        returnDate: "2026-12-02",
+        submittedAt: "2026-11-26 10:15",
+        type: "BORROW"
+      }
+    ];
+
+    const INITIAL_PRINT_ORDERS = [
+      {
+        orderId: "3DP-501",
+        studentName: "Sabrina Al Bukhari",
+        studentUid: "UID-7049211",
+        printer: "Creality K2",
+        fileName: "hexapod_leg_bracket_v3.zip",
+        fileLink: "https://docs.google.com/forms",
+        material: "PLA+ Black",
+        infill: "30%",
+        estTime: "3h 10m",
+        otherRequests: "Use tree supports under servo horn mount",
+        status: "Printing",
+        submittedAt: "2026-11-25 14:20",
+        source: "Student 3D Print QR Form"
+      },
+      {
+        orderId: "3DP-502",
+        studentName: "Rohan Ashar",
+        studentUid: "UID-4920184",
+        printer: "Elegoo Neptune 4 Max",
+        fileName: "realsense_d435_gimbal_mount.zip",
+        fileLink: "https://docs.google.com/forms",
+        material: "PETG Black",
+        infill: "40%",
+        estTime: "1h 45m",
+        otherRequests: "Print flat on base plate",
+        status: "Queued",
+        submittedAt: "2026-11-26 09:05",
+        source: "Google Form Sync"
+      }
+    ];
+
+    const INITIAL_AUDIT_LOG = [
+      {
+        id: "LOG-1",
+        timestamp: "2026-11-22 11:18",
+        action: "CHECKOUT",
+        itemName: "RPlidar A3 (AIRC-019)",
+        studentName: "Rohan Ashar",
+        studentUid: "UID-4920184",
+        details: "Verified University ID card scan at desk • Due 2026-12-01"
+      },
+      {
+        id: "LOG-2",
+        timestamp: "2026-11-23 15:04",
+        action: "CHECKOUT",
+        itemName: "intel realsense camera d435 (AIRC-022)",
+        studentName: "Muzaffar Siddiqui",
+        studentUid: "UID-3819204",
+        details: "Verified University ID card scan at desk • Due 2026-12-03"
+      },
+      {
+        id: "LOG-3",
+        timestamp: "2026-11-24 13:45",
+        action: "CHECKOUT",
+        itemName: "Troseen WX-250 5dof robotic arm (AIRC-005)",
+        studentName: "Yusuf Mirza",
+        studentUid: "UID-5102938",
+        details: "Professor approved + UID card scan verified • Due 2026-12-05"
+      }
+    ];
+
     // Two-Way Google Sheet Inventory + Multi-Device Cloud Sync Script
     const GOOGLE_APPS_SCRIPT_TEMPLATE = `function doGet(e) {
   var props = PropertiesService.getScriptProperties();
@@ -1414,14 +1511,13 @@ function doPost(e) {
 }`;
 
     // =========================================================================
-    // SECTION 2: APPLICATION STATE, LOCALSTORAGE & PREFLIGHT-FREE CLOUD SYNC
+    // SECTION 2: APPLICATION STATE, LOCALSTORAGE & TWO-WAY GOOGLE SHEET SYNC
     // =========================================================================
     const STORAGE_KEY = "AIRC_LAB_SYSTEM_V6";
     const PRINT3D_LOCK_KEY = "AIRC_PRINT3D_SUBMITTED_LOCK";
 
     function normalizeAppsScriptUrl(rawUrl) {
       let clean = (rawUrl || "").trim();
-      // Remove multi-account /u/0/ or /u/1/ segments that break cross-device access
       clean = clean.replace(/\/macros\/u\/\d+\/s\//, "/macros/s/");
       return clean;
     }
@@ -1481,6 +1577,126 @@ function doPost(e) {
       }
     }
 
+    function setSyncDiagnostic(msg, testUrl) {
+      const box = document.getElementById("cloud-sync-diagnostic");
+      const textEl = document.getElementById("cloud-sync-diag-text");
+      const linkEl = document.getElementById("cloud-sync-test-link");
+      if (!box || !textEl || !linkEl) return;
+      box.classList.remove("hidden");
+      textEl.textContent = msg;
+      if (testUrl) {
+        linkEl.href = testUrl;
+        linkEl.classList.remove("hidden");
+      } else {
+        linkEl.classList.add("hidden");
+      }
+    }
+
+    function updateTestSyncAnchor() {
+      const raw = document.getElementById("cloud-sync-url-input")?.value || "";
+      const norm = normalizeAppsScriptUrl(raw);
+      if (norm) {
+        setSyncDiagnostic("Click 'Test /exec Link' to verify it returns JSON without asking for Google sign-in:", norm);
+      }
+    }
+
+    async function pushToCloud() {
+      if (!appState.cloudSyncUrl) return;
+      try {
+        await fetch(appState.cloudSyncUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(appState)
+        });
+      } catch (err) {
+        console.warn("Cloud push warning:", err);
+      }
+    }
+
+    function inventoryFingerprint(list) {
+      if (!Array.isArray(list)) return "";
+      return JSON.stringify(list.map(i => ({
+        id: i.id,
+        name: i.name,
+        category: i.category,
+        totalQty: Number(i.totalQty) || 0,
+        availableQty: Number(i.availableQty) || 0,
+        location: i.location,
+        notes: i.notes || "",
+        askProfessor: !!i.askProfessor
+      })));
+    }
+
+    async function pullFromCloud(silent = false) {
+      if (!appState.cloudSyncUrl) return;
+      try {
+        const sep = appState.cloudSyncUrl.includes("?") ? "&" : "?";
+        const requestUrl = `${appState.cloudSyncUrl}${sep}t=${Date.now()}`;
+        const res = await fetch(requestUrl, {
+          method: "GET",
+          redirect: "follow"
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const rawText = await res.text();
+        if (rawText.trim().startsWith("<")) {
+          throw new Error("Google returned a login/HTML page instead of JSON. Set 'Who has access' to 'Anyone' in Apps Script.");
+        }
+        const data = JSON.parse(rawText);
+        if (data && data.sheetUrl) {
+          appState.connectedSheetUrl = data.sheetUrl;
+        }
+        if (data && !data.empty && Array.isArray(data.inventory) && data.inventory.length > 0) {
+          const localUpdated = appState.lastUpdated || 0;
+          const remoteUpdated = data.lastUpdated || 0;
+          const sheetInventoryChanged = inventoryFingerprint(data.inventory) !== inventoryFingerprint(appState.inventory);
+
+          if (remoteUpdated >= localUpdated || sheetInventoryChanged || !silent) {
+            const base = getDefaultState();
+            const merged = Object.assign({}, base, appState);
+            if (remoteUpdated >= localUpdated || !silent) {
+              Object.assign(merged, data);
+              merged.config = Object.assign({}, base.config, data.config || {});
+            }
+            merged.inventory = data.inventory;
+            if (data.sheetUrl) merged.connectedSheetUrl = data.sheetUrl;
+            appState = merged;
+            saveState(true);
+            applyDynamicConfigToUi();
+            populateCategoryDropdowns();
+            renderAllAssistantViews();
+            if (sheetInventoryChanged && silent) {
+              showToast("Updated inventory from Google Sheet!", "info");
+            }
+          }
+        } else if (!silent) {
+          await pushToCloud();
+          setTimeout(() => pullFromCloud(true), 1800);
+        }
+        updateSyncStatusUi();
+        setSyncDiagnostic(
+          appState.connectedSheetUrl
+            ? "Connected! Editing the 'Inventory' tab in Google Sheets updates this dashboard automatically."
+            : "Connected! Live multi-device sync is active.",
+          appState.cloudSyncUrl
+        );
+        if (!silent) showToast("Connected & synced with Google Sheet!", "success");
+      } catch (err) {
+        console.warn("Cloud pull error:", err);
+        const detail = err && err.message ? err.message : "Network/CORS error";
+        setSyncDiagnostic(`Sync failed (${detail}). Click 'Test /exec Link' to verify it opens without login:`, appState.cloudSyncUrl);
+        if (!silent) showToast("Could not reach Apps Script URL: " + detail, "error");
+      }
+    }
+
+    function manualCloudRefresh() {
+      if (!appState.cloudSyncUrl) {
+        showToast("Connect a Google Apps Script URL in Share & Team Access first.", "warning");
+        return;
+      }
+      pullFromCloud(false);
+    }
+
     function updateSyncStatusUi() {
       const pill = document.getElementById("sync-status-pill");
       const manualBtn = document.getElementById("btn-manual-sync");
@@ -1511,6 +1727,67 @@ function doPost(e) {
           a.classList.add("hidden");
         }
       });
+    }
+
+    // =========================================================================
+    // SECTION 3: UTILITIES, VISUAL PICTURES & QR MATRIX GENERATOR
+    // =========================================================================
+    function escapeHtml(str) {
+      return String(str === null || str === undefined ? "" : str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function getCurrentTimestamp() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function parseCsvLine(line) {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === "," && !inQuotes) {
+          result.push(current.trim());
+          current = "";
+        } else {
+          current += ch;
+        }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+      const styles = {
+        success: "bg-emerald-950 text-emerald-100 border-emerald-700",
+        error: "bg-rose-950 text-rose-100 border-rose-700",
+        warning: "bg-amber-950 text-amber-100 border-amber-700",
+        info: "bg-slate-900 text-white border-slate-700"
+      };
+      const el = document.createElement("div");
+      el.className = `pointer-events-auto rounded-xl border px-4 py-3 text-xs font-semibold shadow-xl transition ${styles[type] || styles.info}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 250);
+      }, 3600);
     }
 
     function getItemPictureHtml(item, heightClass = "h-32") {
@@ -1680,80 +1957,96 @@ function doPost(e) {
           const r = upward ? n - 1 - step : step;
           for (let dx = 0; dx < 2; dx++) {
             const c = col - dx;
-    function inventoryFingerprint(list) {
-      if (!Array.isArray(list)) return "";
-      return JSON.stringify(list.map(i => ({
-        id: i.id,
-        name: i.name,
-        category: i.category,
-        totalQty: Number(i.totalQty) || 0,
-        availableQty: Number(i.availableQty) || 0,
-        location: i.location,
-        notes: i.notes || "",
-        askProfessor: !!i.askProfessor
-      })));
-    }
-
-    async function pullFromCloud(silent = false) {
-      if (!appState.cloudSyncUrl) return;
-      try {
-        const sep = appState.cloudSyncUrl.includes("?") ? "&" : "?";
-        const requestUrl = `${appState.cloudSyncUrl}${sep}t=${Date.now()}`;
-        const res = await fetch(requestUrl, {
-          method: "GET",
-          redirect: "follow"
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const rawText = await res.text();
-        if (rawText.trim().startsWith("<")) {
-          throw new Error("Google returned a login/HTML page instead of JSON. Set 'Who has access' to 'Anyone' in Apps Script.");
-        }
-        const data = JSON.parse(rawText);
-        if (data && data.sheetUrl) {
-          appState.connectedSheetUrl = data.sheetUrl;
-        }
-        if (data && !data.empty && Array.isArray(data.inventory) && data.inventory.length > 0) {
-          const localUpdated = appState.lastUpdated || 0;
-          const remoteUpdated = data.lastUpdated || 0;
-          const sheetInventoryChanged = inventoryFingerprint(data.inventory) !== inventoryFingerprint(appState.inventory);
-
-          if (remoteUpdated >= localUpdated || sheetInventoryChanged || !silent) {
-            const base = getDefaultState();
-            const merged = Object.assign({}, base, appState);
-            if (remoteUpdated >= localUpdated || !silent) {
-              Object.assign(merged, data);
-              merged.config = Object.assign({}, base.config, data.config || {});
-            }
-            // Always take live Google Sheet Inventory rows as source of truth
-            merged.inventory = data.inventory;
-            if (data.sheetUrl) merged.connectedSheetUrl = data.sheetUrl;
-            appState = merged;
-            saveState(true);
-            applyDynamicConfigToUi();
-            populateCategoryDropdowns();
-            renderAllAssistantViews();
-            if (sheetInventoryChanged && silent) {
-              showToast("Updated inventory from Google Sheet!", "info");
+            if (!reserved[r][c]) {
+              const rawBit = bitIdx < streamBits.length ? streamBits[bitIdx] : 0;
+              bitIdx++;
+              const masked = ((r + c) % 2 === 0) ? (rawBit ^ 1) : rawBit;
+              grid[r][c] = masked;
             }
           }
-        } else if (!silent) {
-          await pushToCloud();
-          setTimeout(() => pullFromCloud(true), 1800);
         }
-        updateSyncStatusUi();
-        setSyncDiagnostic(
-          appState.connectedSheetUrl
-            ? "Connected! Editing the 'Inventory' tab in Google Sheets updates this dashboard automatically."
-            : "Connected! Live multi-device sync is active.",
-          appState.cloudSyncUrl
-        );
-        if (!silent) showToast("Connected & synced with Google Sheet!", "success");
-      } catch (err) {
-        console.warn("Cloud pull error:", err);
-        const detail = err && err.message ? err.message : "Network/CORS error";
-        setSyncDiagnostic(`Sync failed (${detail}). Click 'Test /exec Link' to verify it opens without login:`, appState.cloudSyncUrl);
-        if (!silent) showToast("Could not reach Apps Script URL: " + detail, "error");
+        upward = !upward;
       }
+
+      const formatBits = [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0];
+      const fCoords1 = [[8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 7], [8, 8], [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8]];
+      const fCoords2 = [[n - 1, 8], [n - 2, 8], [n - 3, 8], [n - 4, 8], [n - 5, 8], [n - 6, 8], [n - 7, 8], [8, n - 8], [8, n - 7], [8, n - 6], [8, n - 5], [8, n - 4], [8, n - 3], [8, n - 2], [8, n - 1]];
+      for (let i = 0; i < 15; i++) {
+        grid[fCoords1[i][0]][fCoords1[i][1]] = formatBits[i];
+        grid[fCoords2[i][0]][fCoords2[i][1]] = formatBits[i];
+      }
+
+      const quiet = 2;
+      const dim = n + quiet * 2;
+      let rects = "";
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (grid[r][c] === 1) {
+            rects += `<rect x="${c + quiet}" y="${r + quiet}" width="1" height="1" fill="#0f172a"/>`;
+          }
+        }
+      }
+      return `<svg viewBox="0 0 ${dim} ${dim}" width="${size}" height="${size}" class="rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm">${rects}</svg>`;
+    }
+
+    // =========================================================================
+    // SECTION 4: VIEW, ROLE LOCK, DYNAMIC CONFIG & TAB MANAGEMENT
+    // =========================================================================
+    function applyRoleLockUi() {
+      const staffControls = document.getElementById("staff-header-controls");
+      const kpiStrip = document.getElementById("staff-kpi-strip");
+      const studentActions = document.getElementById("student-mode-header-actions");
+      if (isStudentLockedMode && !isStaffUnlocked) {
+        staffControls.classList.add("hidden");
+        kpiStrip.classList.add("hidden");
+        studentActions.classList.remove("hidden");
+      } else {
+        staffControls.classList.remove("hidden");
+        kpiStrip.classList.remove("hidden");
+        studentActions.classList.add("hidden");
+      }
+    }
+
+    function applyDynamicConfigToUi() {
+      const cfg = appState.config || DEFAULT_LAB_CONFIG;
+      const titleEl = document.getElementById("ui-lab-title");
+      const subEl = document.getElementById("ui-lab-subtitle");
+      if (titleEl) titleEl.textContent = cfg.labTitle || DEFAULT_LAB_CONFIG.labTitle;
+      if (subEl) subEl.textContent = cfg.labSubtitle || DEFAULT_LAB_CONFIG.labSubtitle;
+
+      const printers = (cfg.printers && cfg.printers.length > 0) ? cfg.printers : DEFAULT_LAB_CONFIG.printers;
+      const materials = (cfg.materials && cfg.materials.length > 0) ? cfg.materials : DEFAULT_LAB_CONFIG.materials;
+
+      const printerNamesText = printers.map(p => p.name).join(" & ");
+      const summaryEl = document.getElementById("ui-printer-list-summary");
+      const stuNamesEl = document.getElementById("ui-stu-printer-names");
+      if (summaryEl) summaryEl.textContent = printerNamesText;
+      if (stuNamesEl) stuNamesEl.textContent = printers.map(p => p.name).join(" or ");
+
+      const assistantPrinterSel = document.getElementById("print-printer-select");
+      if (assistantPrinterSel) {
+        assistantPrinterSel.innerHTML = printers.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join("");
+      }
+
+      const stuRadioGrid = document.getElementById("stu-printer-radio-grid");
+      if (stuRadioGrid) {
+        stuRadioGrid.innerHTML = printers.map((p, idx) => `
+          <label class="flex items-center gap-3 p-3.5 rounded-xl border-2 ${idx === 0 ? "border-purple-200 bg-purple-50/40" : "border-slate-200"} hover:border-purple-500 cursor-pointer transition">
+            <input type="radio" name="stu-printer-choice" value="${escapeHtml(p.name)}" ${idx === 0 ? "checked" : ""} class="text-purple-600 focus:ring-purple-500" />
+            <div>
+              <div class="text-xs sm:text-sm font-extrabold text-slate-900">${escapeHtml(p.name)}</div>
+              <div class="text-[11px] text-slate-500">${escapeHtml(p.desc || "AIRC Lab 3D Printer")}</div>
+            </div>
+          </label>
+        `).join("");
+      }
+
+      ["print-material", "stu-print-material"].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (sel) {
+          sel.innerHTML = materials.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+        }
+      });
     }
 
     function switchViewMode(mode, lockAsStudent = false, studentSubView = "tools") {
@@ -1967,7 +2260,7 @@ function doPost(e) {
     function copyAiEditContextPrompt() {
       const cfg = appState.config || DEFAULT_LAB_CONFIG;
       const promptText = [
-        "Please modify our existing AIRC Lab Control Center (index.html) while preserving all localStorage keys (AIRC_LAB_SYSTEM_V6), Google Apps Script Cloud Sync, UID card check-in/out audit logs, and current data structures:",
+        "Please modify our existing AIRC Lab Control Center (index.html) while preserving all localStorage keys (AIRC_LAB_SYSTEM_V6), Google Sheet Cloud Sync, UID card check-in/out audit logs, and current data structures:",
         `- Current Title: ${cfg.labTitle}`,
         `- Inventory Count: ${appState.inventory.length} items`,
         `- 3D Printers: ${(cfg.printers || []).map(p => p.name).join(", ")}`,
@@ -1978,7 +2271,7 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // SECTION 6: TEAM ACCESS, SHARE LINKS & CLOUD SYNC MODAL
+    // SECTION 6: TEAM ACCESS, SHARE LINKS & GOOGLE SHEET SYNC MODAL
     // =========================================================================
     function getShareLinks() {
       const baseUrl = window.location.href.split("?")[0];
@@ -2059,7 +2352,7 @@ function doPost(e) {
       saveState(true);
       updateSyncStatusUi();
       if (url) {
-        setSyncDiagnostic("Testing connection to Web App...", url);
+        setSyncDiagnostic("Testing connection to Google Sheet Web App...", url);
         pullFromCloud(false);
       } else {
         document.getElementById("cloud-sync-diagnostic").classList.add("hidden");
@@ -2068,7 +2361,7 @@ function doPost(e) {
     }
 
     function copyAppsScriptCode() {
-      copyTextToClipboard(GOOGLE_APPS_SCRIPT_TEMPLATE, "Copied standalone Google Apps Script (v6.2) to clipboard!");
+      copyTextToClipboard(GOOGLE_APPS_SCRIPT_TEMPLATE, "Copied Two-Way Google Sheet Script to clipboard!");
     }
 
     // =========================================================================
@@ -2291,10 +2584,11 @@ function doPost(e) {
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
-              <button onclick="declineRequest('${req.reqId}')" class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-xs font-bold text-slate-600 transition">
+              <button type="button" onclick="declineRequest('${req.reqId}')" class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-xs font-bold text-slate-600 transition">
                 Decline
               </button>
               <button
+                type="button"
                 onclick="openUidScannerForRequest('${req.reqId}')"
                 ${!canApprove ? "disabled" : ""}
                 class="px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition ${canApprove ? "bg-indigo-600 hover:bg-indigo-700 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed"}"
@@ -2348,7 +2642,7 @@ function doPost(e) {
             <div class="text-xs text-slate-500">Purpose: ${escapeHtml(loan.purpose)}</div>
           </div>
 
-          <button onclick="openUidScannerForReturn('${loan.loanId}')" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm shrink-0 transition">
+          <button type="button" onclick="openUidScannerForReturn('${loan.loanId}')" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm shrink-0 transition">
             Return Tool &amp; Scan UID
           </button>
         </div>
@@ -2383,7 +2677,7 @@ function doPost(e) {
             <p class="text-xs text-slate-600">${escapeHtml(item.location)}</p>
             ${item.notes ? `<p class="text-[11px] text-amber-700 font-semibold">Note: ${escapeHtml(item.notes)}</p>` : ""}
           </div>
-          <button onclick="openUidScannerForDirectCheckout('${item.id}')" class="w-full py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white text-xs font-bold border border-indigo-200 transition">
+          <button type="button" onclick="openUidScannerForDirectCheckout('${item.id}')" class="w-full py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white text-xs font-bold border border-indigo-200 transition">
             Desk Checkout (Scan Student UID)
           </button>
         </div>
@@ -3065,13 +3359,13 @@ function doPost(e) {
           </div>
 
           <div class="flex flex-wrap items-center gap-2 shrink-0">
-            ${order.zipDataUrl ? `<button onclick="downloadAttachedZip('${order.orderId}')" class="px-2.5 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-bold transition">Download .ZIP</button>` : ""}
+            ${order.zipDataUrl ? `<button type="button" onclick="downloadAttachedZip('${order.orderId}')" class="px-2.5 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-bold transition">Download .ZIP</button>` : ""}
             <select onchange="updatePrintOrderStatus('${order.orderId}', this.value)" class="px-2.5 py-1.5 rounded-xl text-xs font-bold border ${badgeColors[order.status] || badgeColors.Queued}">
               ${["Queued", "Printing", "Completed", "Picked Up"].map(st =>
                 `<option value="${st}" ${order.status === st ? "selected" : ""}>${st}</option>`
               ).join("")}
             </select>
-            <button onclick="downloadSinglePrintOrderTxt('${order.orderId}')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+            <button type="button" onclick="downloadSinglePrintOrderTxt('${order.orderId}')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
               Print Details (.TXT)
             </button>
           </div>
